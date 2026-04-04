@@ -204,10 +204,12 @@ function updateBookingBar() {
     const count = selectedPlaces.size;
     if (count === 0) {
         bar.classList.remove('visible');
+        document.body.classList.remove('booking-active');
         return;
     }
 
     bar.classList.add('visible');
+    document.body.classList.add('booking-active');
     bar.innerHTML = `
         <div class="booking-bar-inner">
             <div class="booking-bar-info">
