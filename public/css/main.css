@@ -1482,8 +1482,9 @@ img { display: block; max-width: 100%; }
 }
 
 .logo-img-footer {
-    height: 140px;
+    height: 120px;
     width: auto;
+    max-width: 100%;
     margin-bottom: 1.25rem;
     filter: brightness(0) invert(1);
     opacity: 0.9;
@@ -1654,9 +1655,48 @@ img { display: block; max-width: 100%; }
 @media (max-width: 480px) {
     .section-padding { padding: 64px 0; }
     .hero { height: 90vh; }
-    .hero-metrics { flex-wrap: wrap; justify-content: center; }
+
+    /* Hero metrics — even 3-column row */
+    .hero-metrics { flex-wrap: nowrap; justify-content: center; gap: 0.5rem; }
+    .metric-tile  { flex: 0 0 calc(33% - 0.5rem); min-width: 0; padding: 0.75rem 0.5rem; }
+    .metric-value { font-size: 1.4rem; }
+    .metric-label { font-size: 0.6rem; }
+
+    /* Hero CTAs — full width stack */
     .btn-book-now { display: none; }
-    .hero-cta-group { flex-direction: column; align-items: center; }
+    .hero-cta-group { flex-direction: column; align-items: stretch; width: 100%; max-width: 320px; }
+    .hero-cta-group .btn { width: 100%; justify-content: center; }
+
+    /* Filter chips — horizontal scroll, single row */
+    .tour-filters {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+    .tour-filters::-webkit-scrollbar { display: none; }
+
+    /* Gallery */
     .expedition-gallery { grid-template-columns: 1fr; }
-    .gallery-item.tall { grid-row: span 1; }
+    .gallery-item.tall  { grid-row: span 1; }
+
+    /* Booking bar — stack vertically on small screens */
+    .booking-bar { padding: 0 0.75rem; }
+    .booking-bar-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+    }
+    .booking-bar-info  { justify-content: center; }
+    .booking-bar-cta   { width: 100%; justify-content: center; }
+
+    /* Push page content up so booking bar doesn't cover last card */
+    body.booking-active { padding-bottom: 130px; }
+
+    /* WhatsApp float — lift above booking bar when active */
+    .whatsapp-btn { bottom: 1.5rem; right: 1rem; font-size: 0.8rem; padding: 0.6rem 1rem; }
+    body.booking-active .whatsapp-btn { bottom: 150px; }
 }
