@@ -67,20 +67,37 @@ function initHeroSlider() {
 
     const NUM_DOTS = dots.length;
     let current = 0;
+    let timer;
+
+    function goTo(index) {
+        slides[current].classList.remove('active');
+        current = (index + slides.length) % slides.length;
+        slides[current].classList.add('active');
+        syncDot(current);
+    }
 
     function syncDot(slideIndex) {
         const dotIndex = Math.floor(slideIndex / slides.length * NUM_DOTS);
         dots.forEach((d, i) => d.classList.toggle('active', i === dotIndex));
     }
 
-    syncDot(0);
+    function start() {
+        timer = setInterval(() => goTo(current + 1), 7000);
+    }
 
-    setInterval(() => {
-        slides[current].classList.remove('active');
-        current = (current + 1) % slides.length;
-        slides[current].classList.add('active');
-        syncDot(current);
-    }, 7000);
+    // Dot click — jump to the first slide in that dot's group
+    dots.forEach((dot, i) => {
+        dot.style.cursor = 'pointer';
+        dot.addEventListener('click', () => {
+            clearInterval(timer);
+            const targetSlide = Math.floor(i / NUM_DOTS * slides.length);
+            goTo(targetSlide);
+            start();
+        });
+    });
+
+    syncDot(0);
+    start();
 }
 
 // ── Render: Tours ─────────────────────────────────────────────
@@ -115,6 +132,27 @@ async function renderTours() {
     }).join('');
 }
 
+/// ── Gallery Metadata (keyed by filename) ─────────────────────
+
+const GALLERY_META = {
+    'WhatsApp Image 2026-04-04 at 11.26.47 AM (1).jpeg': { tag: 'Cape Coast',    label: 'Andy at Cape Coast Castle' },
+    'WhatsApp Image 2026-04-04 at 11.26.47 AM.jpeg':     { tag: 'Heritage',      label: 'Cape Coast Castle' },
+    'WhatsApp Image 2026-04-04 at 11.26.46 AM.jpeg':     { tag: 'Group Tour',    label: 'Group Expedition' },
+    'WhatsApp Image 2026-04-04 at 11.26.46 AM (1).jpeg': { tag: 'On Location',   label: 'With Guests, Central Region' },
+    'WhatsApp Image 2026-04-04 at 11.26.34 AM.jpeg':     { tag: 'Safari',        label: 'Safari Excursion' },
+    'WhatsApp Image 2026-04-04 at 11.26.34 AM (1).jpeg': { tag: 'Wildlife',      label: 'Wildlife Encounter' },
+    'WhatsApp Image 2026-04-04 at 11.26.33 AM.jpeg':     { tag: 'Family',        label: 'Family Tour' },
+    'WhatsApp Image 2026-04-04 at 11.26.33 AM (1).jpeg': { tag: 'Highlights',    label: 'Tour Moments' },
+    'WhatsApp Image 2026-04-04 at 11.26.32 AM.jpeg':     { tag: 'Accra',         label: 'Heritage Walk, Accra' },
+    'WhatsApp Image 2026-04-04 at 11.26.29 AM.jpeg':     { tag: 'Volta Region',  label: 'Volta River Cruise' },
+    'WhatsApp Image 2026-04-04 at 11.26.29 AM (1).jpeg': { tag: 'Central Coast', label: 'Coastal Drive' },
+    'WhatsApp Image 2026-04-04 at 11.26.22 AM.jpeg':     { tag: 'The Fleet',     label: "Andy's Premium 4x4" },
+    'WhatsApp Image 2026-04-04 at 2.14.39 PM.jpeg':      { tag: 'On the Road',   label: 'On the Road with Andy' },
+    'WhatsApp Image 2026-04-04 at 2.14.39 PM (1).jpeg':  { tag: 'Expedition',    label: 'Expedition Moment' },
+    'WhatsApp Image 2026-04-04 at 2.14.39 PM (2).jpeg':  { tag: 'Experience',    label: 'Tour Experience' },
+    'WhatsApp Image 2026-04-04 at 2.14.40 PM.jpeg':      { tag: 'Adventure',     label: 'Ghana Adventure' },
+};
+
 // ── Render: Gallery ───────────────────────────────────────────
 
 const SIZES = ['tall', '', 'wide', '', '', 'tall', '', 'wide', '', ''];
@@ -129,14 +167,15 @@ async function renderGallery() {
     const images = paths.filter(p => !p.endsWith('.mp4') && !p.endsWith('.mov'));
 
     gallery.innerHTML = images.map((src, i) => {
-        const size = SIZES[i % SIZES.length];
-        const name = src.split('/').pop().replace(/\.[^.]+$/, '');
+        const size     = SIZES[i % SIZES.length];
+        const filename = src.split('/').pop();
+        const meta     = GALLERY_META[filename] || { tag: 'On the Road', label: 'Ghana with Andy' };
         return `
         <div class="gallery-item${size ? ' ' + size : ''}">
-            <img src="${src}" alt="On the Road with Andy" loading="lazy">
+            <img src="${src}" alt="${meta.label}" loading="lazy">
             <div class="gallery-caption">
-                <span class="gallery-tag">On the Road</span>
-                <span class="gallery-label">${name}</span>
+                <span class="gallery-tag">${meta.tag}</span>
+                <span class="gallery-label">${meta.label}</span>
             </div>
         </div>`;
     }).join('');

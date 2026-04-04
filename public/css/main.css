@@ -151,6 +151,7 @@ img { display: block; max-width: 100%; }
     display: block;
     position: relative;
     z-index: 1001;
+    filter: brightness(0) invert(1);
 }
 
 .nav-links {
@@ -250,6 +251,7 @@ img { display: block; max-width: 100%; }
 .hero-dot {
     width: 8px;
     height: 8px;
+    cursor: pointer;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.35);
     transition: background 0.4s ease, transform 0.4s ease;
@@ -1269,7 +1271,7 @@ img { display: block; max-width: 100%; }
 }
 
 .logo-img-footer {
-    height: 80px;
+    height: 140px;
     width: auto;
     margin-bottom: 1.25rem;
     filter: brightness(0) invert(1);
