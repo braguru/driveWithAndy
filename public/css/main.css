@@ -150,6 +150,7 @@ img { display: block; max-width: 100%; }
 }
 
 .logo { display: flex; align-items: center; }
+.logo a { display: flex; align-items: center; text-decoration: none; }
 
 .logo-img-final {
     height: 160px;
