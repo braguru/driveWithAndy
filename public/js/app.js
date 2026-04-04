@@ -3,6 +3,27 @@
    Dynamic content rendering + interactions
    ============================================================ */
 
+// ── Global config (loaded from server) ───────────────────────
+const CONFIG = { whatsapp: '' };
+
+async function loadConfig() {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    CONFIG.whatsapp = cfg.whatsapp;
+
+    // Update all static WhatsApp & tel links
+    document.querySelectorAll('[data-wa="true"]').forEach(el => {
+        el.href = `https://wa.me/${CONFIG.whatsapp}`;
+    });
+    document.querySelectorAll('[data-tel="true"]').forEach(el => {
+        el.href = `tel:+${CONFIG.whatsapp}`;
+    });
+}
+
+function waLink(message) {
+    return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(message)}`;
+}
+
 // ── Tour Metadata (titles/descriptions keyed by filename) ────
 // Images are fetched live from the server. Metadata is looked
 // up by filename — any image without an entry gets a generic card.
@@ -100,36 +121,228 @@ function initHeroSlider() {
     start();
 }
 
+// ── Tours: state ─────────────────────────────────────────────
+let allLoadedPlaces = [];   // all fetched from API
+let selectedPlaces  = new Map(); // id → name
+let toursOffset     = 0;
+let activeFilter    = 'All';
+let searchQuery     = '';
+const TOURS_PAGE    = 6;
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function renderStars(rating) {
+    if (!rating) return '';
+    const full  = Math.floor(rating);
+    const half  = rating % 1 >= 0.5 ? 1 : 0;
+    const empty = 5 - full - half;
+    return '<span class="tour-stars">'
+        + '<i class="fas fa-star"></i>'.repeat(full)
+        + (half ? '<i class="fas fa-star-half-alt"></i>' : '')
+        + '<i class="far fa-star"></i>'.repeat(empty)
+        + ` <span class="tour-rating-val">${rating.toFixed(1)}</span>`
+        + '</span>';
+}
+
+function tourCardHTML(place) {
+    const imgSrc    = place.photo || 'content/expeditions/cape_coast_castle.jpg';
+    const summary   = place.summary || 'An incredible destination awaiting your exploration with Andy as your guide.';
+    const tag       = place.type || 'Attraction';
+    const detailUrl = `expedition.html?id=${place.id}`;
+    const selected  = selectedPlaces.has(place.id);
+
+    return `
+    <div class="tour-card${selected ? ' selected' : ''}"
+         data-id="${place.id}" data-name="${place.name.replace(/"/g, '&quot;')}"
+         data-type="${tag}" data-name-search="${place.name.toLowerCase()}"
+         onclick="toggleSelectPlace(event, '${place.id}', this)">
+        <div class="tour-select-badge"><i class="fas fa-check"></i></div>
+        <div class="tour-image-wrapper">
+            <div class="img-skeleton"></div>
+            <img src="${imgSrc}" alt="${place.name}" class="tour-img img-fade" loading="lazy"
+                 onload="this.classList.add('loaded');this.previousElementSibling.style.display='none'"
+                 onerror="this.src='content/expeditions/cape_coast_castle.jpg';this.classList.add('loaded');this.previousElementSibling.style.display='none'">
+        </div>
+        <div class="tour-details">
+            <span class="tour-tag">${tag}</span>
+            <h3>${place.name}</h3>
+            ${place.rating ? `<div class="tour-rating">${renderStars(place.rating)} <span class="tour-rating-count">(${(place.ratingCount || 0).toLocaleString()})</span></div>` : ''}
+            <p>${summary}</p>
+            <div class="tour-card-actions">
+                <a href="${detailUrl}" class="btn btn-outline" onclick="event.stopPropagation()">Learn More</a>
+                <button class="btn btn-secondary" onclick="event.stopPropagation(); bookSingle('${place.id}', '${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 80)}', '${place.address || ''}')">Book Tour</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ── Selection ─────────────────────────────────────────────────
+
+function toggleSelectPlace(event, id, card) {
+    // If click is on a button/link, don't toggle
+    if (event.target.closest('a, button')) return;
+    const name = card.dataset.name;
+    if (selectedPlaces.has(id)) {
+        selectedPlaces.delete(id);
+        card.classList.remove('selected');
+    } else {
+        selectedPlaces.set(id, name);
+        card.classList.add('selected');
+    }
+    updateBookingBar();
+}
+
+function updateBookingBar() {
+    let bar = document.getElementById('booking-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'booking-bar';
+        bar.className = 'booking-bar';
+        document.body.appendChild(bar);
+    }
+
+    const count = selectedPlaces.size;
+    if (count === 0) {
+        bar.classList.remove('visible');
+        return;
+    }
+
+    bar.classList.add('visible');
+    bar.innerHTML = `
+        <div class="booking-bar-inner">
+            <div class="booking-bar-info">
+                <i class="fas fa-map-marked-alt"></i>
+                <span><strong>${count}</strong> destination${count > 1 ? 's' : ''} selected</span>
+                <button class="booking-bar-clear" onclick="clearSelection()">Clear</button>
+            </div>
+            <button class="btn btn-primary booking-bar-cta" onclick="bookSelected()">
+                <i class="fab fa-whatsapp"></i> Book Selected Tours
+            </button>
+        </div>`;
+}
+
+function clearSelection() {
+    selectedPlaces.clear();
+    document.querySelectorAll('.tour-card.selected').forEach(c => c.classList.remove('selected'));
+    updateBookingBar();
+}
+
+function bookSingle(id, name, summary, address) {
+    const msg = `Hi Andy! 👋\n\nI'd like to book a tour to:\n\n📍 *${name}*\n${summary ? summary + '\n' : ''}${address ? `📌 ${address}\n` : ''}\nPlease let me know your availability and pricing. Thank you!`;
+    window.open(waLink(msg), '_blank');
+}
+
+function bookSelected() {
+    if (!selectedPlaces.size) return;
+    const list = [...selectedPlaces.values()].map((n, i) => `${i + 1}. 📍 ${n}`).join('\n');
+    const msg  = `Hi Andy! 👋\n\nI'd like to book tours to the following destinations in Ghana:\n\n${list}\n\nPlease let me know your availability and pricing. Thank you!`;
+    window.open(waLink(msg), '_blank');
+}
+
+// ── Search & Filter ───────────────────────────────────────────
+
+function applySearchFilter() {
+    const cards = document.querySelectorAll('#tour-grid .tour-card');
+    cards.forEach(card => {
+        const nameMatch = !searchQuery || card.dataset.nameSearch.includes(searchQuery.toLowerCase());
+        const typeMatch = activeFilter === 'All' || card.dataset.type === activeFilter;
+        card.style.display = (nameMatch && typeMatch) ? '' : 'none';
+    });
+}
+
+function buildFilterChips(places) {
+    const types   = ['All', ...new Set(places.map(p => p.type).filter(Boolean))];
+    const wrapper = document.getElementById('tour-filters');
+    if (!wrapper) return;
+
+    wrapper.innerHTML = types.map(t => `
+        <button class="filter-chip${t === 'All' ? ' active' : ''}" data-type="${t}">${t}</button>
+    `).join('');
+
+    wrapper.addEventListener('click', e => {
+        const chip = e.target.closest('.filter-chip');
+        if (!chip) return;
+        activeFilter = chip.dataset.type;
+        wrapper.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c === chip));
+        applySearchFilter();
+    });
+}
+
+function initSearch() {
+    const input = document.getElementById('tour-search');
+    if (!input) return;
+    input.addEventListener('input', e => {
+        searchQuery = e.target.value.trim();
+        applySearchFilter();
+    });
+}
+
 // ── Render: Tours ─────────────────────────────────────────────
 
 async function renderTours() {
     const grid = document.getElementById('tour-grid');
+    const btn  = document.getElementById('view-more-tours');
     if (!grid) return;
 
-    const paths = await fetchImages('expeditions');
-
-    grid.innerHTML = paths.map(src => {
-        const filename = src.split('/').pop();
-        const meta     = TOUR_META[filename] || {
-            tag: 'Explore', title: filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-            desc: 'Discover this incredible destination with Andy as your guide.',
-            cta: 'Book Tour',
-        };
-        const hidden = !TOURS_VISIBLE.has(filename);
-
-        return `
-        <div class="tour-card${hidden ? ' hidden-tour' : ''}">
-            <div class="tour-image-wrapper">
-                <img src="${src}" alt="${meta.title}" class="tour-img" loading="lazy">
-            </div>
+    grid.innerHTML = Array(TOURS_PAGE).fill(0).map(() => `
+        <div class="tour-card skeleton">
+            <div class="tour-image-wrapper skeleton-img"></div>
             <div class="tour-details">
-                <span class="tour-tag">${meta.tag}</span>
-                <h3>${meta.title}</h3>
-                <p>${meta.desc}</p>
-                <a href="https://wa.me/233542108051" class="btn btn-secondary">${meta.cta}</a>
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
             </div>
-        </div>`;
-    }).join('');
+        </div>`).join('');
+
+    try {
+        const res  = await fetch(`/api/places/attractions?offset=0&limit=${TOURS_PAGE}`);
+        const data = await res.json();
+
+        allLoadedPlaces = data.items;
+        grid.innerHTML  = data.items.map(tourCardHTML).join('');
+        toursOffset     = TOURS_PAGE;
+
+        buildFilterChips(data.items);
+        initSearch();
+
+        if (btn) {
+            btn.style.display = data.hasMore ? 'inline-flex' : 'none';
+            btn.innerHTML = '<i class="fas fa-compass"></i> View More Expeditions';
+        }
+    } catch (err) {
+        console.error('Failed to load attractions:', err);
+        grid.innerHTML = `<p class="error-msg">Could not load attractions. Please refresh the page.</p>`;
+    }
+}
+
+async function loadMoreTours() {
+    const grid = document.getElementById('tour-grid');
+    const btn  = document.getElementById('view-more-tours');
+    if (!grid || !btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+
+    try {
+        const res  = await fetch(`/api/places/attractions?offset=${toursOffset}&limit=${TOURS_PAGE}`);
+        const data = await res.json();
+
+        allLoadedPlaces.push(...data.items);
+        data.items.forEach(p => grid.insertAdjacentHTML('beforeend', tourCardHTML(p)));
+        toursOffset += TOURS_PAGE;
+
+        // Rebuild filter chips with all loaded types
+        buildFilterChips(allLoadedPlaces);
+        applySearchFilter();
+
+        btn.disabled = false;
+        btn.style.display = data.hasMore ? 'inline-flex' : 'none';
+        if (data.hasMore) btn.innerHTML = '<i class="fas fa-compass"></i> View More Expeditions';
+    } catch (err) {
+        console.error('Failed to load more:', err);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-compass"></i> View More Expeditions';
+    }
 }
 
 /// ── Gallery Metadata (keyed by filename) ─────────────────────
@@ -275,19 +488,7 @@ function initVideo() {
 function initViewMore() {
     const btn = document.getElementById('view-more-tours');
     if (!btn) return;
-
-    btn.addEventListener('click', () => {
-        const hidden = document.querySelectorAll('.hidden-tour');
-        const isCollapsed = getComputedStyle(hidden[0]).display === 'none';
-
-        hidden.forEach(card => {
-            card.style.display = isCollapsed ? 'flex' : 'none';
-        });
-
-        btn.innerHTML = isCollapsed
-            ? '<i class="fas fa-chevron-up"></i> Show Less'
-            : '<i class="fas fa-compass"></i> View More Expeditions';
-    });
+    btn.addEventListener('click', loadMoreTours);
 }
 
 // ── Sticky Header ─────────────────────────────────────────────
@@ -334,8 +535,10 @@ function initSmoothScroll() {
 
 // ── Init ──────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Async renders (fetch from server)
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadConfig();
+
+    // Async renders
     renderHeroSlides();
     renderTours();
     renderGallery();
