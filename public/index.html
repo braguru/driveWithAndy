@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveWithAndy | Authentic Ghana Tours & Private Driver</title>
+    <meta name="description" content="Explore Ghana with Andy, your expert local tour guide. Authentic city tours, wildlife safaris, and historical coastal expeditions in Accra, Cape Coast, and beyond.">
+    <!-- Google Fonts: Noto Serif (Headline) & Manrope (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&family=Noto+Serif:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+    <!-- Sticky Header (Glassmorphic) -->
+    <header class="glass-header" id="main-header">
+        <nav class="container nav-wrapper">
+            <div class="logo">
+                <img src="assets/drivewithandy_official_logo_transparent.png" alt="DriveWithAndy" class="logo-img-final">
+            </div>
+            <ul class="nav-links">
+                <li><a href="#tours">Tours</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#fleet">Our Fleet</a></li>
+                <li><a href="#resources">Resources</a></li>
+            </ul>
+            <a href="https://wa.me/233542108051" class="btn btn-primary btn-book-now">Book Now</a>
+            <button class="mobile-menu-toggle"><i class="fas fa-bars"></i></button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section (Slider) -->
+        <section class="hero" id="home">
+            <div class="hero-slides" id="hero-slides-container"></div>
+            <div class="hero-overlay"></div>
+            <div class="hero-dots" id="hero-dots">
+                <span class="hero-dot active"></span>
+                <span class="hero-dot"></span>
+                <span class="hero-dot"></span>
+                <span class="hero-dot"></span>
+                <span class="hero-dot"></span>
+            </div>
+            <div class="container hero-content">
+                <div class="hero-metrics">
+                    <div class="metric-tile glass">
+                        <span class="metric-value">7+</span>
+                        <span class="metric-label">Years Exp.</span>
+                    </div>
+                    <div class="metric-tile glass">
+                        <span class="metric-value">GTA</span>
+                        <span class="metric-label">Certified</span>
+                    </div>
+                    <div class="metric-tile glass">
+                        <span class="metric-value">5.0</span>
+                        <span class="metric-label">Rating</span>
+                    </div>
+                </div>
+                <h1 class="hero-title">Experience the Soul of Ghana</h1>
+                <p class="hero-subtitle">Your personal, authentic journey across the Black Star of Africa starts with Andy.</p>
+                <div class="hero-cta-group">
+                    <a href="#tours" class="btn btn-secondary">Explore Expeditions</a>
+                    <a href="tel:+233542108051" class="btn btn-glass"><i class="fas fa-phone"></i> Direct Line</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Who, What, Where Section -->
+        <section class="core-info section-padding" id="why-us">
+            <div class="container">
+                <div class="grid-columns-3">
+                    <div class="info-card">
+                        <i class="fas fa-id-badge info-icon"></i>
+                        <h3>Who I Am</h3>
+                        <p>I'm Andy — a GTA-licensed tour guide and private driver with over 7 years of cultural knowledge and road expertise across Ghana and West Africa.</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="fas fa-map-marked-alt info-icon"></i>
+                        <h3>What I Offer</h3>
+                        <p>From historical Cape Coast expeditions to vibrant Accra city circuits — fuel-inclusive packages, safe private transport, and authentic storytelling you won't find on any group tour.</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="fas fa-compass info-icon"></i>
+                        <h3>Where I'll Take You</h3>
+                        <p>Across the entire length and breadth of Ghana — Accra, the Central Coast, the Volta Region, the Ashanti Heartland, and all the way up to the Northern Savannah.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tours Section -->
+        <section class="tours section-padding" id="tours">
+            <div class="container">
+                <div class="tours-header">
+                    <div>
+                        <span class="section-eyebrow">Curated Journeys</span>
+                        <h2 class="section-title">Popular Expeditions</h2>
+                        <p class="pull-quote">Every itinerary is a narrative — woven through Ghana's vibrant streets, lush forests, and historic coastlines.</p>
+                    </div>
+                    <div class="tours-header-cta">
+                        <a href="https://wa.me/233542108051" class="tours-view-all">Custom Itinerary <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="tour-grid" id="tour-grid">
+                    <!-- Tours rendered by app.js -->
+                </div>
+                <div class="view-more-wrapper">
+                    <button class="btn btn-secondary" id="view-more-tours">
+                        <i class="fas fa-compass"></i> View More Expeditions
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- On the Road with Andy — Verified Expeditions -->
+        <section class="verified-section section-padding" id="verified">
+            <div class="container">
+
+                <!-- Editorial Section Header -->
+                <div class="verified-header">
+                    <div class="verified-header-left">
+                        <span class="section-eyebrow">Real Journeys. Real Moments.</span>
+                        <h2 class="section-title verified-title">On the Road<br>with Andy</h2>
+                    </div>
+                    <div class="verified-header-right">
+                        <p class="verified-pull-quote">Every photo here was taken on an actual tour. These aren't stock images — they're your future memories, captured by guests who trusted me with their Ghana experience.</p>
+                    </div>
+                </div>
+
+                <!-- Featured Video -->
+                <div class="verified-video-wrap" id="video-wrap">
+                    <video id="expedition-video" class="tour-video" poster="content/gallery/WhatsApp Image 2026-04-04 at 11.26.47 AM.jpeg" preload="metadata">
+                        <source src="content/gallery/WhatsApp Video 2026-04-04 at 11.26.45 AM.mp4" type="video/mp4">
+                    </video>
+                    <div class="video-overlay" id="video-overlay">
+                        <div class="video-play-btn" id="video-play-btn">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                    <div class="video-info-bar">
+                        <div class="video-info-left">
+                            <span class="video-label-tag">Featured Reel</span>
+                            <span class="video-info-title">Life on the Road with Andy — Ghana, 2026</span>
+                        </div>
+                        <div class="video-info-right">
+                            <span class="video-info-stat"><i class="fas fa-map-marker-alt"></i> Ghana</span>
+                            <span class="video-info-stat"><i class="fas fa-camera"></i> Real Footage</span>
+                            <button class="video-expand-btn" id="video-expand-btn" title="Fullscreen" aria-label="Expand video">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo Gallery — dynamically rendered by app.js -->
+                <div class="expedition-gallery" id="expedition-gallery"></div>
+            </div>
+        </section>
+
+        <!-- About Andy -->
+        <section class="about-section section-padding" id="about">
+            <div class="container">
+                <div class="grid-2">
+                    <div class="about-narrative">
+                        <span class="section-eyebrow">Meet Your Guide</span>
+                        <h2 class="section-title">Your Local Expert</h2>
+                        <p class="editorial-text">With over <strong>7 years of experience</strong> traversing Ghana's diverse landscapes, I'm more than just a driver — I'm a certified cultural ambassador and seasoned storyteller.</p>
+                        <p>DriveWithAndy was built on the principle of "Akwaaba" (Welcome). I believe the best way to see Ghana is through the eyes of a local who knows the history, the hidden gems, and the heartbeat of every community.</p>
+                        <ul class="about-bullets">
+                            <li><i class="fas fa-check-circle"></i> Licensed &amp; GTA (Ghana Tourism Authority) Certified</li>
+                            <li><i class="fas fa-check-circle"></i> Fluent in English, Twi, Ga, and French</li>
+                            <li><i class="fas fa-check-circle"></i> Specialized in Historical &amp; Nature Photography Support</li>
+                            <li><i class="fas fa-check-circle"></i> Comprehensive Road Safety &amp; Real-time GPS Tracking</li>
+                        </ul>
+                        <a href="#resources" class="btn btn-primary">Learn Travel Prep</a>
+                    </div>
+                    <div class="about-andy-visual">
+                        <div class="verified-badge">Verified Driver</div>
+                        <img src="content/gallery/WhatsApp Image 2026-04-04 at 11.26.47 AM.jpeg" alt="Andy — DriveWithAndy Tour Guide" class="img-fluid">
+                        <div class="andy-badge">
+                            <img src="content/gallery/WhatsApp Image 2026-04-04 at 11.26.34 AM (1).jpeg" alt="Andy" class="avatar">
+                            <div>
+                                <strong>Andy K.</strong>
+                                <span>Lead Guide &amp; Cultural Narrator</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fleet Section -->
+        <section class="fleet-section section-padding" id="fleet">
+            <div class="container">
+                <div class="fleet-inner">
+                    <div class="fleet-visual">
+                        <div class="fleet-slider" id="fleet-slider">
+                            <!-- rendered by app.js -->
+                        </div>
+                        <div class="fleet-slider-dots" id="fleet-dots"></div>
+                        <div class="fleet-badge">
+                            <div class="fleet-badge-big">4x4</div>
+                            <div class="fleet-badge-small">Certified</div>
+                        </div>
+                    </div>
+                    <div class="fleet-content">
+                        <span class="section-eyebrow">The Fleet</span>
+                        <h2 class="section-title">Premium Comfort for Rugged Terrain</h2>
+                        <p>My vehicles are meticulously maintained and equipped with modern amenities — ensuring your journey is as smooth as the destination is beautiful.</p>
+                        <ul class="spec-list">
+                            <li><i class="fas fa-snowflake"></i> Full Air Conditioning (A/C)</li>
+                            <li><i class="fas fa-wifi"></i> Onboard Wi-Fi</li>
+                            <li><i class="fas fa-shield-alt"></i> Working Seatbelts — Always</li>
+                            <li><i class="fas fa-location-arrow"></i> Real-time GPS Tracking</li>
+                            <li><i class="fas fa-gas-pump"></i> Fuel-Inclusive Packages Available</li>
+                        </ul>
+                        <div class="fleet-stats">
+                            <div class="fleet-stat">
+                                <div>
+                                    <div class="fleet-stat-val">7+</div>
+                                    <div class="fleet-stat-label">Passenger<br>Capacity</div>
+                                </div>
+                            </div>
+                            <div class="fleet-stat">
+                                <div>
+                                    <div class="fleet-stat-val">4WD</div>
+                                    <div class="fleet-stat-label">Terrain<br>Ready</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Travel Resources Section -->
+        <section class="resources section-padding" id="resources">
+            <div class="container">
+                <div class="resources-header">
+                    <span class="section-eyebrow">Before You Arrive</span>
+                    <h2 class="section-title">Ghana Travel Essentials</h2>
+                    <p>Everything you need to know for a seamless entry into Ghana.</p>
+                </div>
+                <div class="resource-grid">
+                    <div class="resource-card">
+                        <i class="fas fa-passport resource-icon"></i>
+                        <h4>Visa &amp; Entry</h4>
+                        <p>E-visa available for all African nationals (free as of May 2026). Most visitors require a standard visa via <em>gisonline.gov.gh</em>.</p>
+                    </div>
+                    <div class="resource-card">
+                        <i class="fas fa-syringe resource-icon"></i>
+                        <h4>Health &amp; Vaccinations</h4>
+                        <p><strong>Yellow Fever certificate is mandatory</strong> for entry. Malaria prophylaxis (e.g., Malarone) is strongly recommended. Drink bottled water only.</p>
+                    </div>
+                    <div class="resource-card">
+                        <i class="fas fa-hands resource-icon"></i>
+                        <h4>Cultural Etiquette</h4>
+                        <p>Akwaaba (Welcome) is central to Ghanaian culture. Greet with the right hand. Modest dress is respectful for religious or rural visits.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <img src="assets/drivewithandy_official_logo_transparent.png" alt="DriveWithAndy" class="logo-img-footer">
+                    <p>Your premium gateway to the sights, sounds, and soul of Ghana. Authentic tours driven by local expertise and genuine care.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#tours">Expeditions</a></li>
+                        <li><a href="#verified">On the Road</a></li>
+                        <li><a href="#about">About Andy</a></li>
+                        <li><a href="#fleet">Our Fleet</a></li>
+                        <li><a href="#resources">Travel Info</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Get in Touch</h4>
+                    <p><i class="fas fa-phone"></i> +233 54 210 8051</p>
+                    <p><i class="fab fa-whatsapp"></i> WhatsApp Preferred</p>
+                    <p><i class="fas fa-envelope"></i> tettehanderson@gmail.com</p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/abrantieandymelomey" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://wa.me/233542108051" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 DriveWithAndy Tours &nbsp;•&nbsp; Ghana Tourism Authority Licensed &nbsp;•&nbsp; All Rights Reserved
+        </div>
+    </footer>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/233542108051" class="whatsapp-btn pulse">
+        <i class="fab fa-whatsapp"></i> Chat with Andy
+    </a>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
