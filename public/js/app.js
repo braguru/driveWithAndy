@@ -29,8 +29,8 @@ function waLink(message) {
 const GENERAL_SUBJECT = 'General Tour Enquiry';
 const GENERAL_MESSAGE = `Hi Andy! 👋\n\nI'm interested in booking a tour with DriveWithAndy and would like to know more about your services and availability.\n\nPlease let me know how we can get started.\n\nThank you!`;
 
-function tourEmailMessage(name, desc) {
-    return `Hi Andy! 👋\n\nI'd like to book a tour to:\n\n📍 ${name}\n${desc ? desc + '\n' : ''}\nPlease let me know your availability and pricing.\n\nThank you!`;
+function tourEmailMessage(name, desc, address) {
+    return `Hi Andy! 👋\n\nI'd like to book a tour to:\n\n📍 ${name}\n${desc ? desc + '\n' : ''}${address ? `📌 ${address}\n` : ''}\nPlease let me know your availability and pricing.\n\nThank you!`;
 }
 
 function openContactModal(subject = GENERAL_SUBJECT, message = GENERAL_MESSAGE) {
@@ -54,8 +54,8 @@ function closeContactModal() {
     document.body.style.overflow = '';
 }
 
-function emailTour(name, desc) {
-    openContactModal(`Enquiry about ${name}`, tourEmailMessage(name, desc));
+function emailTour(name, desc, address) {
+    openContactModal(`Enquiry about ${name}`, tourEmailMessage(name, desc, address));
 }
 
 // ── Tour Metadata (titles/descriptions keyed by filename) ────
@@ -205,7 +205,7 @@ function tourCardHTML(place) {
             <div class="tour-card-actions">
                 <a href="${detailUrl}" class="btn btn-outline" onclick="event.stopPropagation()">Learn More</a>
                 <button class="btn btn-secondary" onclick="event.stopPropagation(); bookSingle('${place.id}', '${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 80)}', '${place.address || ''}')">Book Tour</button>
-                <button class="btn btn-glass tour-email-btn" title="Email Andy about this tour" onclick="event.stopPropagation(); emailTour('${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 120)}')"><i class="fas fa-envelope"></i></button>
+                <button class="btn btn-glass tour-email-btn" title="Email Andy about this tour" onclick="event.stopPropagation(); emailTour('${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 120)}', '${(place.address || '').replace(/'/g, "\\'")}')"><i class="fas fa-envelope"></i></button>
             </div>
         </div>
     </div>`;
@@ -252,9 +252,14 @@ function updateBookingBar() {
                 <span><strong>${count}</strong> destination${count > 1 ? 's' : ''} selected</span>
                 <button class="booking-bar-clear" onclick="clearSelection()">Clear</button>
             </div>
-            <button class="btn btn-primary booking-bar-cta" onclick="bookSelected()">
-                <i class="fab fa-whatsapp"></i> Book Selected Tours
-            </button>
+            <div class="booking-bar-actions">
+                <button class="btn btn-outline booking-bar-email" onclick="emailSelected()">
+                    <i class="fas fa-envelope"></i> Email Andy
+                </button>
+                <button class="btn btn-primary booking-bar-cta" onclick="bookSelected()">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
+            </div>
         </div>`;
 }
 
@@ -274,6 +279,15 @@ function bookSelected() {
     const list = [...selectedPlaces.values()].map((n, i) => `${i + 1}. 📍 ${n}`).join('\n');
     const msg  = `Hi Andy! 👋\n\nI'd like to book tours to the following destinations in Ghana:\n\n${list}\n\nPlease let me know your availability and pricing. Thank you!`;
     window.open(waLink(msg), '_blank');
+}
+
+function emailSelected() {
+    if (!selectedPlaces.size) return;
+    const count = selectedPlaces.size;
+    const list  = [...selectedPlaces.values()].map((n, i) => `${i + 1}. 📍 ${n}`).join('\n');
+    const subject = `Tour Enquiry — ${count} Destination${count > 1 ? 's' : ''}`;
+    const message = `Hi Andy! 👋\n\nI'd like to book tours to the following destinations in Ghana:\n\n${list}\n\nPlease let me know your availability and pricing.\n\nThank you!`;
+    openContactModal(subject, message);
 }
 
 // ── Search & Filter ───────────────────────────────────────────
@@ -535,11 +549,27 @@ function initFleetSlider() {
 // ── Video ─────────────────────────────────────────────────────
 
 function initVideo() {
-    const video   = document.getElementById('expedition-video');
-    const overlay = document.getElementById('video-overlay');
-    const playBtn = document.getElementById('video-play-btn');
-    const wrap    = document.getElementById('video-wrap');
+    const video       = document.getElementById('expedition-video');
+    const overlay     = document.getElementById('video-overlay');
+    const centerBtn   = document.getElementById('video-play-btn');
+    const ctrlPlayBtn = document.getElementById('video-ctrl-play');
+    const seekBar     = document.getElementById('video-seek');
+    const timeCurrent = document.getElementById('video-time-current');
+    const timeDuration= document.getElementById('video-time-duration');
+    const wrap        = document.getElementById('video-wrap');
     if (!video || !overlay || !wrap) return;
+
+    function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return `${m}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function setPlayIcon(playing) {
+        const icon = playing ? 'pause' : 'play';
+        if (centerBtn)   centerBtn.innerHTML  = `<i class="fas fa-${icon}"></i>`;
+        if (ctrlPlayBtn) ctrlPlayBtn.innerHTML = `<i class="fas fa-${icon}"></i>`;
+    }
 
     function toggleVideoPlay() {
         if (video.paused || video.ended) {
@@ -551,20 +581,36 @@ function initVideo() {
     }
 
     overlay.addEventListener('click', toggleVideoPlay);
+    video.addEventListener('click', toggleVideoPlay);
+    if (ctrlPlayBtn) ctrlPlayBtn.addEventListener('click', toggleVideoPlay);
 
-    video.addEventListener('pause', () => {
-        overlay.classList.remove('hidden');
-        playBtn.innerHTML = '<i class="fas fa-play"></i>';
-    });
-
+    video.addEventListener('play',  () => setPlayIcon(true));
+    video.addEventListener('pause', () => { setPlayIcon(false); overlay.classList.remove('hidden'); });
     video.addEventListener('ended', () => {
         overlay.classList.remove('hidden');
-        playBtn.innerHTML = '<i class="fas fa-redo"></i>';
+        if (centerBtn)   centerBtn.innerHTML  = '<i class="fas fa-redo"></i>';
+        if (ctrlPlayBtn) ctrlPlayBtn.innerHTML = '<i class="fas fa-redo"></i>';
     });
 
-    video.addEventListener('click', toggleVideoPlay);
+    // Seek bar — update position as video plays
+    video.addEventListener('timeupdate', () => {
+        if (!video.duration) return;
+        const pct = (video.currentTime / video.duration) * 100;
+        if (seekBar) seekBar.value = pct;
+        if (timeCurrent) timeCurrent.textContent = formatTime(video.currentTime);
+    });
 
-    // Keyboard play/pause — works both in normal and fullscreen
+    video.addEventListener('loadedmetadata', () => {
+        if (timeDuration) timeDuration.textContent = formatTime(video.duration);
+    });
+
+    if (seekBar) {
+        seekBar.addEventListener('input', () => {
+            if (video.duration) video.currentTime = (seekBar.value / 100) * video.duration;
+        });
+    }
+
+    // Keyboard play/pause — works in normal view and fullscreen
     document.addEventListener('keydown', e => {
         if (document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
         if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && document.fullscreenElement) {
@@ -577,7 +623,6 @@ function initVideo() {
     if (expandBtn) {
         expandBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
-                // Fullscreen the wrapper so overlay/controls are included
                 const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen;
                 req.call(wrap);
                 expandBtn.innerHTML = '<i class="fas fa-compress"></i>';
