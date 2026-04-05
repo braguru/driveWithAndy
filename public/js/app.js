@@ -407,28 +407,87 @@ const GALLERY_META = {
 
 const SIZES = ['tall', '', 'wide', '', '', 'tall', '', 'wide', '', ''];
 
+let galleryImages = []; // populated by renderGallery for lightbox use
+
 async function renderGallery() {
     const gallery = document.getElementById('expedition-gallery');
     if (!gallery) return;
 
     const paths = await fetchImages('gallery');
-
-    // Exclude non-image files like the video
     const images = paths.filter(p => !p.endsWith('.mp4') && !p.endsWith('.mov'));
 
-    gallery.innerHTML = images.map((src, i) => {
-        const size     = SIZES[i % SIZES.length];
+    galleryImages = images.map(src => {
         const filename = src.split('/').pop();
         const meta     = GALLERY_META[filename] || { tag: 'On the Road', label: 'Ghana with Andy' };
+        return { src, ...meta };
+    });
+
+    gallery.innerHTML = galleryImages.map((item, i) => {
+        const size = SIZES[i % SIZES.length];
         return `
-        <div class="gallery-item${size ? ' ' + size : ''}">
-            <img src="${src}" alt="${meta.label}" loading="lazy">
+        <div class="gallery-item${size ? ' ' + size : ''}" data-index="${i}" onclick="openGalleryLightbox(${i})" role="button" tabindex="0" aria-label="View ${item.label}">
+            <img src="${item.src}" alt="${item.label}" loading="lazy">
             <div class="gallery-caption">
-                <span class="gallery-tag">${meta.tag}</span>
-                <span class="gallery-label">${meta.label}</span>
+                <span class="gallery-tag">${item.tag}</span>
+                <span class="gallery-label">${item.label}</span>
             </div>
+            <div class="gallery-expand-icon"><i class="fas fa-expand-alt"></i></div>
         </div>`;
     }).join('');
+}
+
+// ── Gallery Lightbox ──────────────────────────────────────────
+
+let lightboxIndex = 0;
+
+function openGalleryLightbox(index) {
+    lightboxIndex = index;
+    const lb = document.getElementById('gallery-lightbox');
+    if (!lb) return;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    updateLightboxSlide();
+}
+
+function closeGalleryLightbox() {
+    const lb = document.getElementById('gallery-lightbox');
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function updateLightboxSlide() {
+    const item = galleryImages[lightboxIndex];
+    if (!item) return;
+    const img = document.getElementById('lightbox-img');
+    const cap = document.getElementById('lightbox-caption');
+    img.src = item.src;
+    img.alt = item.label;
+    cap.innerHTML = `<span class="lightbox-tag">${item.tag}</span><span class="lightbox-label">${item.label}</span>`;
+    document.getElementById('lightbox-counter').textContent = `${lightboxIndex + 1} / ${galleryImages.length}`;
+}
+
+function lightboxNav(dir) {
+    lightboxIndex = (lightboxIndex + dir + galleryImages.length) % galleryImages.length;
+    updateLightboxSlide();
+}
+
+function initGalleryLightbox() {
+    document.getElementById('lightbox-close')?.addEventListener('click', closeGalleryLightbox);
+    document.getElementById('lightbox-prev')?.addEventListener('click', () => lightboxNav(-1));
+    document.getElementById('lightbox-next')?.addEventListener('click', () => lightboxNav(1));
+
+    document.getElementById('gallery-lightbox')?.addEventListener('click', e => {
+        if (e.target === document.getElementById('gallery-lightbox')) closeGalleryLightbox();
+    });
+
+    document.addEventListener('keydown', e => {
+        const lb = document.getElementById('gallery-lightbox');
+        if (!lb?.classList.contains('open')) return;
+        if (e.key === 'Escape')      closeGalleryLightbox();
+        if (e.key === 'ArrowLeft')   lightboxNav(-1);
+        if (e.key === 'ArrowRight')  lightboxNav(1);
+    });
 }
 
 // ── Render: Fleet ─────────────────────────────────────────────
@@ -481,10 +540,16 @@ function initVideo() {
     const playBtn = document.getElementById('video-play-btn');
     if (!video || !overlay) return;
 
-    overlay.addEventListener('click', () => {
-        video.play();
-        overlay.classList.add('hidden');
-    });
+    function toggleVideoPlay() {
+        if (video.paused || video.ended) {
+            video.play();
+            overlay.classList.add('hidden');
+        } else {
+            video.pause();
+        }
+    }
+
+    overlay.addEventListener('click', toggleVideoPlay);
 
     video.addEventListener('pause', () => {
         overlay.classList.remove('hidden');
@@ -496,8 +561,15 @@ function initVideo() {
         playBtn.innerHTML = '<i class="fas fa-redo"></i>';
     });
 
-    video.addEventListener('click', () => {
-        if (!video.paused) video.pause();
+    video.addEventListener('click', toggleVideoPlay);
+
+    // Keyboard play/pause — works both in normal and fullscreen
+    document.addEventListener('keydown', e => {
+        if (document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+        if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && document.fullscreenElement === video) {
+            e.preventDefault();
+            toggleVideoPlay();
+        }
     });
 
     const expandBtn = document.getElementById('video-expand-btn');
@@ -651,6 +723,10 @@ function initContactModal() {
         openContactModal();
     });
 
+    document.getElementById('email-float-btn')?.addEventListener('click', () => {
+        openContactModal();
+    });
+
     document.getElementById('contact-form').addEventListener('submit', e => {
         e.preventDefault();
         submitContactForm();
@@ -675,4 +751,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     initMobileMenu();
     initSmoothScroll();
     initContactModal();
+    initGalleryLightbox();
 });
