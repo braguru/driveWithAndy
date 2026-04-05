@@ -85,6 +85,16 @@ async function loadPlace() {
         document.getElementById('sidebar-whatsapp').href =
             `https://wa.me/233542108051?text=Hi%20Andy!%20I'm%20interested%20in%20visiting%20${encodeURIComponent(place.name)}`;
 
+        // Email CTA pre-filled with place details
+        document.getElementById('sidebar-email')?.addEventListener('click', () => {
+            const desc = place.summary ? place.summary.slice(0, 120) : '';
+            const addr = place.address || '';
+            openExpContactModal(
+                `Enquiry about ${place.name}`,
+                `Hi Andy! 👋\n\nI'd like to book a tour to:\n\n📍 ${place.name}\n${desc ? desc + '\n' : ''}${addr ? `📌 ${addr}\n` : ''}\nPlease let me know your availability and pricing.\n\nThank you!`
+            );
+        });
+
         // Address
         if (place.address) {
             const el = document.getElementById('exp-address');
@@ -217,9 +227,95 @@ function showLightboxSlide() {
     credit.textContent  = photo.authorName ? `© ${photo.authorName}` : '';
 }
 
+// ── Contact Modal ─────────────────────────────────────────────
+
+function openExpContactModal(subject, message) {
+    const overlay = document.getElementById('contact-modal-overlay');
+    if (!overlay) return;
+    document.getElementById('cf-subject').value = subject || 'General Tour Enquiry';
+    document.getElementById('cf-message').value = message ||
+        'Hi Andy! 👋\n\nI\'m interested in booking a tour with DriveWithAndy and would like to know more about your services and availability.\n\nPlease let me know how we can get started.\n\nThank you!';
+    document.getElementById('contact-form').style.display = '';
+    document.getElementById('contact-success').style.display = 'none';
+    document.getElementById('contact-form-error').classList.remove('visible');
+    document.querySelectorAll('.contact-input').forEach(i => i.classList.remove('error'));
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('cf-name')?.focus(), 300);
+}
+
+function closeExpContactModal() {
+    const overlay = document.getElementById('contact-modal-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+async function submitExpContactForm(e) {
+    e.preventDefault();
+    const errorEl = document.getElementById('contact-form-error');
+    const submitBtn = document.getElementById('contact-submit');
+    errorEl.classList.remove('visible');
+
+    const name    = document.getElementById('cf-name').value.trim();
+    const email   = document.getElementById('cf-email').value.trim();
+    const subject = document.getElementById('cf-subject').value.trim();
+    const message = document.getElementById('cf-message').value.trim();
+
+    if (!name || !email || !subject || !message) {
+        errorEl.textContent = 'Please fill in all required fields.';
+        errorEl.classList.add('visible');
+        return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errorEl.textContent = 'Please enter a valid email address.';
+        errorEl.classList.add('visible');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    try {
+        const res = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name, email,
+                phone:      document.getElementById('cf-phone').value.trim(),
+                country:    document.getElementById('cf-country').value.trim(),
+                subject,
+                travellers: document.getElementById('cf-travellers').value.trim(),
+                travelDate: document.getElementById('cf-date').value.trim(),
+                message,
+            }),
+        });
+        if (!res.ok) throw new Error('Send failed');
+        document.getElementById('contact-form').style.display = 'none';
+        document.getElementById('contact-success').style.display = '';
+    } catch {
+        errorEl.textContent = 'Something went wrong. Please try again or WhatsApp Andy directly.';
+        errorEl.classList.add('visible');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Send Message <i class="fas fa-arrow-right"></i>';
+    }
+}
+
+function initExpContactModal() {
+    document.getElementById('contact-modal-close')?.addEventListener('click', closeExpContactModal);
+    document.getElementById('contact-modal-overlay')?.addEventListener('click', e => {
+        if (e.target.id === 'contact-modal-overlay') closeExpContactModal();
+    });
+    document.getElementById('contact-form')?.addEventListener('submit', submitExpContactForm);
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeExpContactModal();
+    });
+}
+
 // ─────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
+    initExpContactModal();
     try {
         const cfg = await fetch('/api/places/config').then(r => r.json());
         window.__GOOGLE_KEY__ = cfg.mapsKey;
