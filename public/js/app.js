@@ -625,18 +625,20 @@ function initVideo() {
             if (!document.fullscreenElement) {
                 const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen;
                 req.call(wrap);
-                expandBtn.innerHTML = '<i class="fas fa-compress"></i>';
             } else {
                 (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen).call(document);
-                expandBtn.innerHTML = '<i class="fas fa-expand"></i>';
             }
         });
 
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                expandBtn.innerHTML = '<i class="fas fa-expand"></i>';
-            }
-        });
+        const onFullscreenChange = () => {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            wrap.classList.toggle('is-fullscreen', isFs);
+            expandBtn.innerHTML = isFs
+                ? '<i class="fas fa-compress"></i>'
+                : '<i class="fas fa-expand"></i>';
+        };
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     }
 }
 
