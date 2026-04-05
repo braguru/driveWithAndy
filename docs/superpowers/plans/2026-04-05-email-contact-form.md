@@ -54,7 +54,7 @@ The `.env` SMTP block should look like:
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
 SMTP_USER=sabastainofori@gmail.com
-SMTP_PASSWORD=ixihtraszmnxphoq
+SMTP_PASSWORD=xxxxxxxxxxxxxx
 SMTP_FROM=sabastainofori@gmail.com
 SMTP_TO=tettehanderson@gmail.com
 SMTP_TLS=false
