@@ -6,6 +6,15 @@
 const GENERAL_SUBJECT = 'General Tour Enquiry';
 const GENERAL_MESSAGE = `Hi Andy! 👋\n\nI'm interested in booking a tour with DriveWithAndy and would like to know more about your services and availability.\n\nPlease let me know how we can get started.\n\nThank you!`;
 
+// Page-specific context for the floating button (overridden by expedition.js after place loads)
+let _floatSubject = GENERAL_SUBJECT;
+let _floatMessage = GENERAL_MESSAGE;
+
+function setContactModalContext(subject, message) {
+    _floatSubject = subject;
+    _floatMessage = message;
+}
+
 function tourEmailMessage(name, desc, address) {
     return `Hi Andy! 👋\n\nI'd like to book a tour to:\n\n📍 ${name}\n${desc ? desc + '\n' : ''}${address ? `📌 ${address}\n` : ''}\nPlease let me know your availability and pricing.\n\nThank you!`;
 }
@@ -97,7 +106,7 @@ function initContactModal() {
     overlay.addEventListener('click', e => { if (e.target === overlay) closeContactModal(); });
     document.getElementById('contact-modal-close').addEventListener('click', closeContactModal);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeContactModal(); });
-    document.getElementById('email-float-btn')?.addEventListener('click', () => openContactModal());
+    document.getElementById('email-float-btn')?.addEventListener('click', () => openContactModal(_floatSubject, _floatMessage));
     document.getElementById('contact-form').addEventListener('submit', e => {
         e.preventDefault();
         submitContactForm();
