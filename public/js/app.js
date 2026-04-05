@@ -205,6 +205,7 @@ function tourCardHTML(place) {
             <div class="tour-card-actions">
                 <a href="${detailUrl}" class="btn btn-outline" onclick="event.stopPropagation()">Learn More</a>
                 <button class="btn btn-secondary" onclick="event.stopPropagation(); bookSingle('${place.id}', '${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 80)}', '${place.address || ''}')">Book Tour</button>
+                <button class="btn btn-glass tour-email-btn" title="Email Andy about this tour" onclick="event.stopPropagation(); emailTour('${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 120)}')"><i class="fas fa-envelope"></i></button>
             </div>
         </div>
     </div>`;
