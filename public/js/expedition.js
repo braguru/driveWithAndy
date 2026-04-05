@@ -85,12 +85,12 @@ async function loadPlace() {
         document.getElementById('sidebar-whatsapp').href =
             `https://wa.me/233542108051?text=Hi%20Andy!%20I'm%20interested%20in%20visiting%20${encodeURIComponent(place.name)}`;
 
-        // Email CTA pre-filled with place details
+        // Pre-fill float button and sidebar email button with place details
+        const placeSubject = `Enquiry about ${place.name}`;
+        const placeMessage = tourEmailMessage(place.name, place.summary?.slice(0, 120) || '', place.address || '');
+        setContactModalContext(placeSubject, placeMessage);
         document.getElementById('sidebar-email')?.addEventListener('click', () => {
-            openContactModal(
-                `Enquiry about ${place.name}`,
-                tourEmailMessage(place.name, place.summary?.slice(0, 120) || '', place.address || '')
-            );
+            openContactModal(placeSubject, placeMessage);
         });
 
         // Address
