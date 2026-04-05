@@ -148,22 +148,34 @@
                     <video id="expedition-video" class="tour-video" poster="content/gallery/WhatsApp Image 2026-04-04 at 11.26.47 AM.jpeg" preload="metadata">
                         <source src="content/gallery/WhatsApp Video 2026-04-04 at 11.26.45 AM.mp4" type="video/mp4">
                     </video>
+                    <!-- Centre overlay — big icon when paused -->
                     <div class="video-overlay" id="video-overlay">
                         <div class="video-play-btn" id="video-play-btn">
                             <i class="fas fa-play"></i>
                         </div>
                     </div>
-                    <div class="video-info-bar">
-                        <div class="video-info-left">
-                            <span class="video-label-tag">Featured Reel</span>
-                            <span class="video-info-title">Life on the Road with Andy — Ghana, 2026</span>
+                    <!-- Bottom controls bar -->
+                    <div class="video-info-bar" id="video-controls-bar">
+                        <div class="video-seek-row">
+                            <span class="video-time" id="video-time-current">0:00</span>
+                            <input type="range" id="video-seek" class="video-seek" min="0" max="100" value="0" step="0.1">
+                            <span class="video-time" id="video-time-duration">0:00</span>
                         </div>
-                        <div class="video-info-right">
-                            <span class="video-info-stat"><i class="fas fa-map-marker-alt"></i> Ghana</span>
-                            <span class="video-info-stat"><i class="fas fa-camera"></i> Real Footage</span>
-                            <button class="video-expand-btn" id="video-expand-btn" title="Fullscreen" aria-label="Expand video">
-                                <i class="fas fa-expand"></i>
-                            </button>
+                        <div class="video-controls-bottom">
+                            <div class="video-info-left">
+                                <span class="video-label-tag">Featured Reel</span>
+                                <span class="video-info-title">Life on the Road with Andy — Ghana, 2026</span>
+                            </div>
+                            <div class="video-info-right">
+                                <button class="video-ctrl-btn" id="video-ctrl-play" title="Play / Pause" aria-label="Play/Pause">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <span class="video-info-stat"><i class="fas fa-map-marker-alt"></i> Ghana</span>
+                                <span class="video-info-stat"><i class="fas fa-camera"></i> Real Footage</span>
+                                <button class="video-expand-btn" id="video-expand-btn" title="Fullscreen" aria-label="Expand video">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

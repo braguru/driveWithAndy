@@ -833,6 +833,32 @@ img { display: block; max-width: 100%; }
 
 .booking-bar-clear:hover { color: #fff; }
 
+.booking-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.booking-bar-email {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-md);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.booking-bar-email:hover { background: rgba(255,255,255,0.2); }
+
 .booking-bar-cta {
     white-space: nowrap;
     display: flex;
@@ -921,8 +947,7 @@ img { display: block; max-width: 100%; }
     width: 100vw;
     height: 100vh;
     border-radius: 0;
-    display: flex;
-    align-items: center;
+    display: block;
     background: #000;
 }
 
@@ -930,8 +955,8 @@ img { display: block; max-width: 100%; }
 .verified-video-wrap:-webkit-full-screen .tour-video,
 .verified-video-wrap:-moz-full-screen .tour-video {
     width: 100%;
-    height: 100%;
-    max-height: 100vh;
+    height: calc(100vh - 80px);
+    max-height: none;
     object-fit: contain;
 }
 
@@ -1008,19 +1033,77 @@ img { display: block; max-width: 100%; }
     transform: scale(1.1);
 }
 
-/* Video info bar (replaces old video-label) */
+/* Video controls bar */
 .video-info-bar {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 1.25rem 1.75rem;
-    background: linear-gradient(to top, rgba(3, 38, 7, 0.92) 0%, rgba(3, 38, 7, 0.4) 70%, transparent 100%);
+    padding: 0.6rem 1.25rem 1rem;
+    background: linear-gradient(to top, rgba(3, 38, 7, 0.95) 0%, rgba(3, 38, 7, 0.5) 70%, transparent 100%);
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 3;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+/* Seek row */
+.video-seek-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    pointer-events: auto;
+    width: 100%;
+}
+
+.video-time {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 36px;
+    font-variant-numeric: tabular-nums;
+}
+
+.video-seek {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.25);
+    outline: none;
+    cursor: pointer;
+    accent-color: var(--heritage-gold);
+}
+
+.video-seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--heritage-gold);
+    cursor: pointer;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+.video-seek::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--heritage-gold);
+    border: none;
+    cursor: pointer;
+}
+
+/* Controls bottom row */
+.video-controls-bottom {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    z-index: 3;
     pointer-events: none;
 }
 
@@ -1038,7 +1121,8 @@ img { display: block; max-width: 100%; }
 
 .video-info-right {
     display: flex;
-    gap: 1.25rem;
+    align-items: center;
+    gap: 0.75rem;
     flex-shrink: 0;
 }
 
@@ -1053,6 +1137,7 @@ img { display: block; max-width: 100%; }
 
 .video-info-stat i { color: var(--heritage-gold); font-size: 0.7rem; }
 
+.video-ctrl-btn,
 .video-expand-btn {
     display: flex;
     align-items: center;
@@ -1068,8 +1153,10 @@ img { display: block; max-width: 100%; }
     pointer-events: auto;
     transition: all 0.25s ease;
     backdrop-filter: blur(6px);
+    flex-shrink: 0;
 }
 
+.video-ctrl-btn:hover,
 .video-expand-btn:hover {
     background: var(--heritage-gold);
     border-color: var(--heritage-gold);
@@ -1711,8 +1798,10 @@ img { display: block; max-width: 100%; }
         padding: 1rem;
         border-radius: var(--radius-lg);
     }
-    .booking-bar-info  { justify-content: center; }
-    .booking-bar-cta   { width: 100%; justify-content: center; }
+    .booking-bar-info    { justify-content: center; }
+    .booking-bar-actions { flex-direction: column; gap: 0.5rem; }
+    .booking-bar-email,
+    .booking-bar-cta     { width: 100%; justify-content: center; }
 
     /* Push page content up so booking bar doesn't cover last card */
     body.booking-active { padding-bottom: 130px; }
