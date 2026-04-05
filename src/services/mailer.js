@@ -31,8 +31,13 @@ function fill(template, data) {
 async function sendEnquiry(data) {
     const transport = createTransport();
 
-    const enquiryHtml      = fill(loadTemplate('enquiry.html'), data);
-    const confirmationHtml = fill(loadTemplate('confirmation.html'), data);
+    const templateData = {
+        ...data,
+        appUrl: (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, ''),
+    };
+
+    const enquiryHtml      = fill(loadTemplate('enquiry.html'), templateData);
+    const confirmationHtml = fill(loadTemplate('confirmation.html'), templateData);
 
     await Promise.all([
         transport.sendMail({
