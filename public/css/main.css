@@ -955,7 +955,7 @@ img { display: block; max-width: 100%; }
 .verified-video-wrap:-webkit-full-screen .tour-video,
 .verified-video-wrap:-moz-full-screen .tour-video {
     width: 100%;
-    height: calc(100vh - 80px);
+    height: 100%;
     max-height: none;
     object-fit: contain;
 }
