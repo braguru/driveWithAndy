@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const fs         = require('fs');
 const path       = require('path');
 
+const LOGO_URL  = 'https://raw.githubusercontent.com/braguru/driveWithAndy/main/public/assets/drivewithandy_official_logo_transparent_trimmed.png';
 const LOGO_PATH = path.join(__dirname, '../../public/assets/drivewithandy_official_logo_transparent_trimmed.png');
 const LOGO_CID  = 'dwa-logo@drivewithandy';
 
@@ -41,7 +42,8 @@ const logoAttachment = {
 async function sendEnquiry(data) {
     const transport = createTransport();
 
-    const templateData = { ...data, logoCid: `cid:${LOGO_CID}` };
+    // Use remote URL for Gmail (which blocks CID); CID attachment as fallback for other clients
+    const templateData = { ...data, logoCid: LOGO_URL };
 
     const enquiryHtml      = fill(loadTemplate('enquiry.html'), templateData);
     const confirmationHtml = fill(loadTemplate('confirmation.html'), templateData);
