@@ -538,7 +538,8 @@ function initVideo() {
     const video   = document.getElementById('expedition-video');
     const overlay = document.getElementById('video-overlay');
     const playBtn = document.getElementById('video-play-btn');
-    if (!video || !overlay) return;
+    const wrap    = document.getElementById('video-wrap');
+    if (!video || !overlay || !wrap) return;
 
     function toggleVideoPlay() {
         if (video.paused || video.ended) {
@@ -566,7 +567,7 @@ function initVideo() {
     // Keyboard play/pause — works both in normal and fullscreen
     document.addEventListener('keydown', e => {
         if (document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
-        if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && document.fullscreenElement === video) {
+        if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && document.fullscreenElement) {
             e.preventDefault();
             toggleVideoPlay();
         }
@@ -576,7 +577,9 @@ function initVideo() {
     if (expandBtn) {
         expandBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
-                (video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen).call(video);
+                // Fullscreen the wrapper so overlay/controls are included
+                const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen;
+                req.call(wrap);
                 expandBtn.innerHTML = '<i class="fas fa-compress"></i>';
             } else {
                 (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen).call(document);
