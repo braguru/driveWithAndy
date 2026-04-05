@@ -24,6 +24,40 @@ function waLink(message) {
     return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(message)}`;
 }
 
+// ── Contact Modal ─────────────────────────────────────────────
+
+const GENERAL_SUBJECT = 'General Tour Enquiry';
+const GENERAL_MESSAGE = `Hi Andy! 👋\n\nI'm interested in booking a tour with DriveWithAndy and would like to know more about your services and availability.\n\nPlease let me know how we can get started.\n\nThank you!`;
+
+function tourEmailMessage(name, desc, address) {
+    return `Hi Andy! 👋\n\nI'd like to book a tour to:\n\n📍 ${name}\n${desc ? desc + '\n' : ''}${address ? `📌 ${address}\n` : ''}\nPlease let me know your availability and pricing.\n\nThank you!`;
+}
+
+function openContactModal(subject = GENERAL_SUBJECT, message = GENERAL_MESSAGE) {
+    const overlay = document.getElementById('contact-modal-overlay');
+    if (!overlay) return;
+    document.getElementById('cf-subject').value = subject;
+    document.getElementById('cf-message').value = message;
+    document.getElementById('contact-form').style.display = '';
+    document.getElementById('contact-success').style.display = 'none';
+    document.getElementById('contact-form-error').classList.remove('visible');
+    document.querySelectorAll('.contact-input').forEach(i => i.classList.remove('error'));
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('cf-name')?.focus(), 300);
+}
+
+function closeContactModal() {
+    const overlay = document.getElementById('contact-modal-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function emailTour(name, desc, address) {
+    openContactModal(`Enquiry about ${name}`, tourEmailMessage(name, desc, address));
+}
+
 // ── Tour Metadata (titles/descriptions keyed by filename) ────
 // Images are fetched live from the server. Metadata is looked
 // up by filename — any image without an entry gets a generic card.
@@ -171,6 +205,7 @@ function tourCardHTML(place) {
             <div class="tour-card-actions">
                 <a href="${detailUrl}" class="btn btn-outline" onclick="event.stopPropagation()">Learn More</a>
                 <button class="btn btn-secondary" onclick="event.stopPropagation(); bookSingle('${place.id}', '${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 80)}', '${place.address || ''}')">Book Tour</button>
+                <button class="btn btn-glass tour-email-btn" title="Email Andy about this tour" onclick="event.stopPropagation(); emailTour('${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 120)}', '${(place.address || '').replace(/'/g, "\\'")}')"><i class="fas fa-envelope"></i></button>
             </div>
         </div>
     </div>`;
@@ -217,9 +252,14 @@ function updateBookingBar() {
                 <span><strong>${count}</strong> destination${count > 1 ? 's' : ''} selected</span>
                 <button class="booking-bar-clear" onclick="clearSelection()">Clear</button>
             </div>
-            <button class="btn btn-primary booking-bar-cta" onclick="bookSelected()">
-                <i class="fab fa-whatsapp"></i> Book Selected Tours
-            </button>
+            <div class="booking-bar-actions">
+                <button class="btn btn-outline booking-bar-email" onclick="emailSelected()">
+                    <i class="fas fa-envelope"></i> Email Andy
+                </button>
+                <button class="btn btn-primary booking-bar-cta" onclick="bookSelected()">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
+            </div>
         </div>`;
 }
 
@@ -239,6 +279,15 @@ function bookSelected() {
     const list = [...selectedPlaces.values()].map((n, i) => `${i + 1}. 📍 ${n}`).join('\n');
     const msg  = `Hi Andy! 👋\n\nI'd like to book tours to the following destinations in Ghana:\n\n${list}\n\nPlease let me know your availability and pricing. Thank you!`;
     window.open(waLink(msg), '_blank');
+}
+
+function emailSelected() {
+    if (!selectedPlaces.size) return;
+    const count = selectedPlaces.size;
+    const list  = [...selectedPlaces.values()].map((n, i) => `${i + 1}. 📍 ${n}`).join('\n');
+    const subject = `Tour Enquiry — ${count} Destination${count > 1 ? 's' : ''}`;
+    const message = `Hi Andy! 👋\n\nI'd like to book tours to the following destinations in Ghana:\n\n${list}\n\nPlease let me know your availability and pricing.\n\nThank you!`;
+    openContactModal(subject, message);
 }
 
 // ── Search & Filter ───────────────────────────────────────────
@@ -372,28 +421,87 @@ const GALLERY_META = {
 
 const SIZES = ['tall', '', 'wide', '', '', 'tall', '', 'wide', '', ''];
 
+let galleryImages = []; // populated by renderGallery for lightbox use
+
 async function renderGallery() {
     const gallery = document.getElementById('expedition-gallery');
     if (!gallery) return;
 
     const paths = await fetchImages('gallery');
-
-    // Exclude non-image files like the video
     const images = paths.filter(p => !p.endsWith('.mp4') && !p.endsWith('.mov'));
 
-    gallery.innerHTML = images.map((src, i) => {
-        const size     = SIZES[i % SIZES.length];
+    galleryImages = images.map(src => {
         const filename = src.split('/').pop();
         const meta     = GALLERY_META[filename] || { tag: 'On the Road', label: 'Ghana with Andy' };
+        return { src, ...meta };
+    });
+
+    gallery.innerHTML = galleryImages.map((item, i) => {
+        const size = SIZES[i % SIZES.length];
         return `
-        <div class="gallery-item${size ? ' ' + size : ''}">
-            <img src="${src}" alt="${meta.label}" loading="lazy">
+        <div class="gallery-item${size ? ' ' + size : ''}" data-index="${i}" onclick="openGalleryLightbox(${i})" role="button" tabindex="0" aria-label="View ${item.label}">
+            <img src="${item.src}" alt="${item.label}" loading="lazy">
             <div class="gallery-caption">
-                <span class="gallery-tag">${meta.tag}</span>
-                <span class="gallery-label">${meta.label}</span>
+                <span class="gallery-tag">${item.tag}</span>
+                <span class="gallery-label">${item.label}</span>
             </div>
+            <div class="gallery-expand-icon"><i class="fas fa-expand-alt"></i></div>
         </div>`;
     }).join('');
+}
+
+// ── Gallery Lightbox ──────────────────────────────────────────
+
+let lightboxIndex = 0;
+
+function openGalleryLightbox(index) {
+    lightboxIndex = index;
+    const lb = document.getElementById('gallery-lightbox');
+    if (!lb) return;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    updateLightboxSlide();
+}
+
+function closeGalleryLightbox() {
+    const lb = document.getElementById('gallery-lightbox');
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function updateLightboxSlide() {
+    const item = galleryImages[lightboxIndex];
+    if (!item) return;
+    const img = document.getElementById('lightbox-img');
+    const cap = document.getElementById('lightbox-caption');
+    img.src = item.src;
+    img.alt = item.label;
+    cap.innerHTML = `<span class="lightbox-tag">${item.tag}</span><span class="lightbox-label">${item.label}</span>`;
+    document.getElementById('lightbox-counter').textContent = `${lightboxIndex + 1} / ${galleryImages.length}`;
+}
+
+function lightboxNav(dir) {
+    lightboxIndex = (lightboxIndex + dir + galleryImages.length) % galleryImages.length;
+    updateLightboxSlide();
+}
+
+function initGalleryLightbox() {
+    document.getElementById('lightbox-close')?.addEventListener('click', closeGalleryLightbox);
+    document.getElementById('lightbox-prev')?.addEventListener('click', () => lightboxNav(-1));
+    document.getElementById('lightbox-next')?.addEventListener('click', () => lightboxNav(1));
+
+    document.getElementById('gallery-lightbox')?.addEventListener('click', e => {
+        if (e.target === document.getElementById('gallery-lightbox')) closeGalleryLightbox();
+    });
+
+    document.addEventListener('keydown', e => {
+        const lb = document.getElementById('gallery-lightbox');
+        if (!lb?.classList.contains('open')) return;
+        if (e.key === 'Escape')      closeGalleryLightbox();
+        if (e.key === 'ArrowLeft')   lightboxNav(-1);
+        if (e.key === 'ArrowRight')  lightboxNav(1);
+    });
 }
 
 // ── Render: Fleet ─────────────────────────────────────────────
@@ -441,47 +549,96 @@ function initFleetSlider() {
 // ── Video ─────────────────────────────────────────────────────
 
 function initVideo() {
-    const video   = document.getElementById('expedition-video');
-    const overlay = document.getElementById('video-overlay');
-    const playBtn = document.getElementById('video-play-btn');
-    if (!video || !overlay) return;
+    const video       = document.getElementById('expedition-video');
+    const overlay     = document.getElementById('video-overlay');
+    const centerBtn   = document.getElementById('video-play-btn');
+    const ctrlPlayBtn = document.getElementById('video-ctrl-play');
+    const seekBar     = document.getElementById('video-seek');
+    const timeCurrent = document.getElementById('video-time-current');
+    const timeDuration= document.getElementById('video-time-duration');
+    const wrap        = document.getElementById('video-wrap');
+    if (!video || !overlay || !wrap) return;
 
-    overlay.addEventListener('click', () => {
-        video.play();
-        overlay.classList.add('hidden');
-    });
+    function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return `${m}:${sec.toString().padStart(2, '0')}`;
+    }
 
-    video.addEventListener('pause', () => {
-        overlay.classList.remove('hidden');
-        playBtn.innerHTML = '<i class="fas fa-play"></i>';
-    });
+    function setPlayIcon(playing) {
+        const icon = playing ? 'pause' : 'play';
+        if (centerBtn)   centerBtn.innerHTML  = `<i class="fas fa-${icon}"></i>`;
+        if (ctrlPlayBtn) ctrlPlayBtn.innerHTML = `<i class="fas fa-${icon}"></i>`;
+    }
 
+    function toggleVideoPlay() {
+        if (video.paused || video.ended) {
+            video.play();
+            overlay.classList.add('hidden');
+        } else {
+            video.pause();
+        }
+    }
+
+    overlay.addEventListener('click', toggleVideoPlay);
+    video.addEventListener('click', toggleVideoPlay);
+    if (ctrlPlayBtn) ctrlPlayBtn.addEventListener('click', toggleVideoPlay);
+
+    video.addEventListener('play',  () => setPlayIcon(true));
+    video.addEventListener('pause', () => { setPlayIcon(false); overlay.classList.remove('hidden'); });
     video.addEventListener('ended', () => {
         overlay.classList.remove('hidden');
-        playBtn.innerHTML = '<i class="fas fa-redo"></i>';
+        if (centerBtn)   centerBtn.innerHTML  = '<i class="fas fa-redo"></i>';
+        if (ctrlPlayBtn) ctrlPlayBtn.innerHTML = '<i class="fas fa-redo"></i>';
     });
 
-    video.addEventListener('click', () => {
-        if (!video.paused) video.pause();
+    // Seek bar — update position as video plays
+    video.addEventListener('timeupdate', () => {
+        if (!video.duration) return;
+        const pct = (video.currentTime / video.duration) * 100;
+        if (seekBar) seekBar.value = pct;
+        if (timeCurrent) timeCurrent.textContent = formatTime(video.currentTime);
+    });
+
+    video.addEventListener('loadedmetadata', () => {
+        if (timeDuration) timeDuration.textContent = formatTime(video.duration);
+    });
+
+    if (seekBar) {
+        seekBar.addEventListener('input', () => {
+            if (video.duration) video.currentTime = (seekBar.value / 100) * video.duration;
+        });
+    }
+
+    // Keyboard play/pause — works in normal view and fullscreen
+    document.addEventListener('keydown', e => {
+        if (document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+        if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && document.fullscreenElement) {
+            e.preventDefault();
+            toggleVideoPlay();
+        }
     });
 
     const expandBtn = document.getElementById('video-expand-btn');
     if (expandBtn) {
         expandBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
-                (video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen).call(video);
-                expandBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen;
+                req.call(wrap);
             } else {
                 (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen).call(document);
-                expandBtn.innerHTML = '<i class="fas fa-expand"></i>';
             }
         });
 
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                expandBtn.innerHTML = '<i class="fas fa-expand"></i>';
-            }
-        });
+        const onFullscreenChange = () => {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            wrap.classList.toggle('is-fullscreen', isFs);
+            expandBtn.innerHTML = isFs
+                ? '<i class="fas fa-compress"></i>'
+                : '<i class="fas fa-expand"></i>';
+        };
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     }
 }
 
@@ -527,11 +684,102 @@ function initMobileMenu() {
 function initSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(a => {
         a.addEventListener('click', e => {
-            const target = document.querySelector(a.getAttribute('href'));
+            const href = a.getAttribute('href');
+            if (href === '#') return;
+            const target = document.querySelector(href);
             if (!target) return;
             e.preventDefault();
             target.scrollIntoView({ behavior: 'smooth' });
         });
+    });
+}
+
+// ── Contact Modal Init ────────────────────────────────────────
+
+async function submitContactForm() {
+    const form      = document.getElementById('contact-form');
+    const submitBtn = document.getElementById('contact-submit');
+    const errorEl   = document.getElementById('contact-form-error');
+
+    errorEl.classList.remove('visible');
+    form.querySelectorAll('.contact-input').forEach(i => i.classList.remove('error'));
+
+    const data = {
+        name:       document.getElementById('cf-name').value.trim(),
+        email:      document.getElementById('cf-email').value.trim(),
+        phone:      document.getElementById('cf-phone').value.trim(),
+        country:    document.getElementById('cf-country').value.trim(),
+        subject:    document.getElementById('cf-subject').value.trim(),
+        travellers: document.getElementById('cf-travellers').value.trim(),
+        travelDate: document.getElementById('cf-date').value.trim(),
+        message:    document.getElementById('cf-message').value.trim(),
+    };
+
+    let hasError = false;
+    if (!data.name)  { document.getElementById('cf-name').classList.add('error');    hasError = true; }
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        document.getElementById('cf-email').classList.add('error'); hasError = true;
+    }
+    if (!data.subject) { document.getElementById('cf-subject').classList.add('error'); hasError = true; }
+    if (!data.message) { document.getElementById('cf-message').classList.add('error'); hasError = true; }
+
+    if (hasError) {
+        errorEl.textContent = 'Please fill in all required fields.';
+        errorEl.classList.add('visible');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+    try {
+        const res  = await fetch('/api/contact', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(data),
+        });
+        const json = await res.json();
+
+        if (res.ok && json.success) {
+            document.getElementById('contact-form').style.display    = 'none';
+            document.getElementById('contact-success').style.display = 'block';
+            setTimeout(closeContactModal, 3000);
+        } else {
+            throw new Error(json.error || 'Something went wrong.');
+        }
+    } catch (err) {
+        errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+        errorEl.classList.add('visible');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Send Message <i class="fas fa-arrow-right"></i>';
+    }
+}
+
+function initContactModal() {
+    const overlay = document.getElementById('contact-modal-overlay');
+    if (!overlay) return;
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeContactModal(); });
+    document.getElementById('contact-modal-close').addEventListener('click', closeContactModal);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeContactModal(); });
+
+    document.getElementById('contact-nav-trigger')?.addEventListener('click', e => {
+        e.preventDefault();
+        openContactModal();
+    });
+
+    document.getElementById('contact-footer-trigger')?.addEventListener('click', e => {
+        e.preventDefault();
+        openContactModal();
+    });
+
+    document.getElementById('email-float-btn')?.addEventListener('click', () => {
+        openContactModal();
+    });
+
+    document.getElementById('contact-form').addEventListener('submit', e => {
+        e.preventDefault();
+        submitContactForm();
     });
 }
 
@@ -552,4 +800,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     initHeader();
     initMobileMenu();
     initSmoothScroll();
+    initContactModal();
+    initGalleryLightbox();
 });
