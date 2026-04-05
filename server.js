@@ -20,6 +20,7 @@ app.get('/api/config', (req, res) => {
 // API routes
 app.use('/api', require('./src/routes/images'));
 app.use('/api/places', require('./src/routes/places'));
+app.use('/api', require('./src/routes/contact'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`DriveWithAndy → http://localhost:${PORT}`));
