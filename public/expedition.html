@@ -90,6 +90,9 @@
                     <a id="sidebar-whatsapp" href="https://wa.me/233542108051" class="btn btn-primary btn-block">
                         <i class="fab fa-whatsapp"></i> Chat with Andy
                     </a>
+                    <button id="sidebar-email" class="btn btn-outline btn-block" onclick="openExpContactModal()">
+                        <i class="fas fa-envelope"></i> Email Andy
+                    </button>
                     <a href="tel:+233542108051" class="btn btn-outline btn-block">
                         <i class="fas fa-phone"></i> Call Directly
                     </a>
@@ -162,9 +165,84 @@
         </div>
     </footer>
 
+    <!-- Floating Email Button -->
+    <button class="email-float-btn" id="email-float-btn" aria-label="Email Andy" onclick="openExpContactModal()">
+        <i class="fas fa-envelope"></i> Email Andy
+    </button>
+
     <a href="https://wa.me/233542108051" class="whatsapp-btn pulse">
         <i class="fab fa-whatsapp"></i> Chat with Andy
     </a>
+
+    <!-- Contact Modal -->
+    <div class="contact-modal-overlay" id="contact-modal-overlay" role="dialog" aria-modal="true" aria-label="Contact Andy">
+        <div class="contact-modal" id="contact-modal">
+            <div class="contact-modal-header">
+                <div>
+                    <span class="contact-modal-eyebrow">Get In Touch</span>
+                    <h3 class="contact-modal-title">Send Andy a Message</h3>
+                    <p class="contact-modal-subtitle">We'll reply within 24 hours</p>
+                </div>
+                <button class="contact-modal-close" id="contact-modal-close" aria-label="Close">✕</button>
+            </div>
+            <form class="contact-form" id="contact-form" novalidate>
+                <div class="contact-form-row">
+                    <div class="contact-field">
+                        <label class="contact-label" for="cf-name">FULL NAME <span class="contact-required">*</span></label>
+                        <input class="contact-input" type="text" id="cf-name" name="name" placeholder="Your name" required autocomplete="name">
+                    </div>
+                    <div class="contact-field">
+                        <label class="contact-label" for="cf-email">EMAIL <span class="contact-required">*</span></label>
+                        <input class="contact-input" type="email" id="cf-email" name="email" placeholder="you@email.com" required autocomplete="email">
+                    </div>
+                </div>
+                <div class="contact-form-row">
+                    <div class="contact-field">
+                        <label class="contact-label" for="cf-phone">PHONE <span class="contact-optional">(optional)</span></label>
+                        <input class="contact-input" type="tel" id="cf-phone" name="phone" placeholder="+1 555 000 0000" autocomplete="tel">
+                    </div>
+                    <div class="contact-field">
+                        <label class="contact-label" for="cf-country">COUNTRY <span class="contact-optional">(optional)</span></label>
+                        <input class="contact-input" type="text" id="cf-country" name="country" placeholder="United States" autocomplete="country-name">
+                    </div>
+                </div>
+                <div class="contact-field">
+                    <div class="contact-label-row">
+                        <label class="contact-label" for="cf-subject">SUBJECT <span class="contact-required">*</span></label>
+                        <span class="contact-autofill-badge">AUTO-FILLED</span>
+                    </div>
+                    <input class="contact-input contact-input-autofill" type="text" id="cf-subject" name="subject" required>
+                </div>
+                <div class="contact-form-row">
+                    <div class="contact-field">
+                        <label class="contact-label" for="cf-travellers">NO. OF TRAVELLERS <span class="contact-optional">(optional)</span></label>
+                        <input class="contact-input" type="text" id="cf-travellers" name="travellers" placeholder="2 people">
+                    </div>
+                    <div class="contact-field">
+                        <label class="contact-label" for="cf-date">TRAVEL DATE <span class="contact-optional">(optional)</span></label>
+                        <input class="contact-input" type="text" id="cf-date" name="travelDate" placeholder="dd / mm / yyyy">
+                    </div>
+                </div>
+                <div class="contact-field">
+                    <div class="contact-label-row">
+                        <label class="contact-label" for="cf-message">MESSAGE <span class="contact-required">*</span></label>
+                        <span class="contact-autofill-badge">AUTO-FILLED · EDITABLE</span>
+                    </div>
+                    <textarea class="contact-input contact-input-autofill contact-textarea" id="cf-message" name="message" rows="5" required></textarea>
+                </div>
+                <div class="contact-form-error" id="contact-form-error"></div>
+                <button class="btn btn-primary contact-submit" type="submit" id="contact-submit">
+                    Send Message <i class="fas fa-arrow-right"></i>
+                </button>
+                <p class="contact-trust">🔒 Your details are never shared. Reply expected within 24 hrs.</p>
+            </form>
+            <div class="contact-success" id="contact-success">
+                <div class="contact-success-icon"><i class="fas fa-check-circle"></i></div>
+                <h3>Message Sent!</h3>
+                <p>Andy will reply within 24 hours.<br>Check your inbox for a confirmation.</p>
+            </div>
+        </div>
+    </div>
 
     <script src="js/expedition.js"></script>
 </body>
