@@ -11,7 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/expedition.css">
-    <link rel="icon" type="image/png" href="assets/drivewithandy_official_logo_transparent.png">
+    <link rel="icon" type="image/svg+xml" href="assets/logos/logo-light.svg">
+    <script>(function(){try{var t=localStorage.getItem('dwa-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})()</script>
 </head>
 <body>
 
@@ -20,7 +21,7 @@
         <nav class="container nav-wrapper">
             <div class="logo">
                 <a href="index.html">
-                    <img src="assets/drivewithandy_official_logo_transparent.png" alt="DriveWithAndy" class="logo-img-final">
+                    <img src="assets/logos/logo-light.svg" alt="DriveWithAndy" class="logo-img-final">
                 </a>
             </div>
             <ul class="nav-links">
@@ -29,7 +30,12 @@
                 <li><a href="index.html#fleet">Our Fleet</a></li>
                 <li><a href="index.html#resources">Resources</a></li>
             </ul>
-            <a href="https://wa.me/233542108051" class="btn btn-primary btn-book-now">Book Now</a>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle day/night mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <a href="https://wa.me/233542108051" class="btn btn-primary btn-book-now">Book Now</a>
+            </div>
             <button class="mobile-menu-toggle"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
@@ -139,7 +145,7 @@
         <div class="container">
             <div class="footer-inner">
                 <div class="footer-brand">
-                    <img src="assets/drivewithandy_official_logo_transparent.png" alt="DriveWithAndy" class="logo-img-footer">
+                    <img src="assets/logos/logo-dark.svg" alt="DriveWithAndy" class="logo-img-footer">
                     <p>Your premium gateway to the sights, sounds, and soul of Ghana.</p>
                 </div>
                 <div class="footer-links">
@@ -246,5 +252,6 @@
 
     <script src="js/contact-modal.js"></script>
     <script src="js/expedition.js"></script>
+    <script src="js/theme.js"></script>
 </body>
 </html>

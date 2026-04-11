@@ -5,8 +5,8 @@ const nodemailer = require('nodemailer');
 const fs         = require('fs');
 const path       = require('path');
 
-const LOGO_URL  = 'https://raw.githubusercontent.com/braguru/driveWithAndy/main/public/assets/drivewithandy_official_logo_transparent_trimmed.png';
-const LOGO_PATH = path.join(__dirname, '../../public/assets/drivewithandy_official_logo_transparent_trimmed.png');
+const LOGO_URL  = 'https://raw.githubusercontent.com/braguru/driveWithAndy/main/public/assets/logos/logo-dark.svg';
+const LOGO_PATH = path.join(__dirname, '../../public/assets/logos/logo-dark.svg');
 const LOGO_CID  = 'dwa-logo@drivewithandy';
 
 function createTransport() {
@@ -33,9 +33,10 @@ function fill(template, data) {
 }
 
 const logoAttachment = {
-    filename:    'logo.png',
+    filename:    'logo.svg',
     path:        LOGO_PATH,
     cid:         LOGO_CID,
+    contentType: 'image/svg+xml',
     contentDisposition: 'inline',
 };
 

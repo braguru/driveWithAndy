@@ -176,8 +176,8 @@ function tourCardHTML(place) {
             <p>${summary}</p>
             <div class="tour-card-actions">
                 <a href="${detailUrl}" class="btn btn-outline" onclick="event.stopPropagation()">Learn More</a>
-                <button class="btn btn-secondary" onclick="event.stopPropagation(); bookSingle('${place.id}', '${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 80)}', '${place.address || ''}')">Book Tour</button>
-                <button class="btn btn-glass tour-email-btn" title="Email Andy about this tour" onclick="event.stopPropagation(); emailTour('${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 120)}', '${(place.address || '').replace(/'/g, "\\'")}')"><i class="fas fa-envelope"></i></button>
+                <button class="btn btn-primary tour-book-btn" onclick="event.stopPropagation(); bookSingle('${place.id}', '${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 80)}', '${place.address || ''}')"><i class="fab fa-whatsapp"></i> Book Tour</button>
+                <button class="tour-email-btn" title="Email Andy about this tour" onclick="event.stopPropagation(); emailTour('${place.name.replace(/'/g, "\\'")}', '${(place.summary || '').replace(/'/g, "\\'").slice(0, 120)}', '${(place.address || '').replace(/'/g, "\\'")}')"><i class="fas fa-envelope"></i> Email Andy</button>
             </div>
         </div>
     </div>`;
