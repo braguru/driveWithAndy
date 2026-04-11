@@ -75,7 +75,8 @@ async function fetchImages(folder) {
 // ── Render: Hero Slides ───────────────────────────────────────
 
 async function renderHeroSlides() {
-    const container = document.getElementById('hero-slides-container');
+    const container     = document.getElementById('hero-slides-container');
+    const dotsContainer = document.getElementById('hero-dots');
     if (!container) return;
 
     const paths = await fetchImages('expeditions');
@@ -83,6 +84,12 @@ async function renderHeroSlides() {
     container.innerHTML = paths.map((src, i) => `
         <div class="hero-slide${i === 0 ? ' active' : ''}" style="background-image: url('${src}')"></div>
     `).join('');
+
+    if (dotsContainer) {
+        dotsContainer.innerHTML = paths.map((_, i) => `
+            <span class="hero-dot${i === 0 ? ' active' : ''}"></span>
+        `).join('');
+    }
 
     initHeroSlider();
 }
@@ -92,38 +99,30 @@ function initHeroSlider() {
     const dots   = document.querySelectorAll('.hero-dot');
     if (!slides.length) return;
 
-    const NUM_DOTS = dots.length;
     let current = 0;
     let timer;
 
     function goTo(index) {
         slides[current].classList.remove('active');
+        dots[current]?.classList.remove('active');
         current = (index + slides.length) % slides.length;
         slides[current].classList.add('active');
-        syncDot(current);
-    }
-
-    function syncDot(slideIndex) {
-        const dotIndex = Math.floor(slideIndex / slides.length * NUM_DOTS);
-        dots.forEach((d, i) => d.classList.toggle('active', i === dotIndex));
+        dots[current]?.classList.add('active');
     }
 
     function start() {
         timer = setInterval(() => goTo(current + 1), 7000);
     }
 
-    // Dot click — jump to the first slide in that dot's group
     dots.forEach((dot, i) => {
         dot.style.cursor = 'pointer';
         dot.addEventListener('click', () => {
             clearInterval(timer);
-            const targetSlide = Math.floor(i / NUM_DOTS * slides.length);
-            goTo(targetSlide);
+            goTo(i);
             start();
         });
     });
 
-    syncDot(0);
     start();
 }
 
