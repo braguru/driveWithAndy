@@ -227,10 +227,28 @@ function showLightboxSlide() {
 
 // ── Contact Modal — see contact-modal.js ─────────────────────
 
+// ── Mobile Menu ───────────────────────────────────────────────
+
+function initMobileMenu() {
+    const toggle   = document.querySelector('.mobile-menu-toggle');
+    const overlay  = document.getElementById('mobile-menu-overlay');
+    const closeBtn = document.getElementById('mobile-menu-close');
+    if (!toggle || !overlay || !closeBtn) return;
+
+    const openMenu  = () => { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; };
+    const closeMenu = () => { overlay.classList.remove('open'); document.body.style.overflow = ''; };
+
+    toggle.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeMenu(); });
+    overlay.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+}
+
 // ─────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
     initContactModal();
+    initMobileMenu();
     try {
         const cfg = await fetch('/api/places/config').then(r => r.json());
         window.__GOOGLE_KEY__ = cfg.mapsKey;
