@@ -119,4 +119,8 @@ function initContactModal() {
     document.getElementById('contact-footer-trigger')?.addEventListener('click', e => {
         e.preventDefault(); openContactModal();
     });
+    document.getElementById('contact-menu-trigger')?.addEventListener('click', e => {
+        e.preventDefault();
+        setTimeout(() => openContactModal(), 320);
+    });
 }

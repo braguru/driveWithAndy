@@ -4,8 +4,8 @@
    ============================================================ */
 
 function initTheme() {
-    const btn = document.getElementById('theme-toggle');
-    if (!btn) return;
+    const btns = document.querySelectorAll('.theme-toggle');
+    if (btns.length === 0) return;
 
     function getTheme() {
         return document.documentElement.getAttribute('data-theme') || 'light';
@@ -19,12 +19,18 @@ function initTheme() {
 
     function applyUI(theme) {
         const dark = theme === 'dark';
-        const icon = btn.querySelector('i');
-        if (icon) icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+        btns.forEach(btn => {
+            const icon  = btn.querySelector('i');
+            const label = btn.querySelector('.theme-label');
+            if (icon)  icon.className    = dark ? 'fas fa-sun'    : 'fas fa-moon';
+            if (label) label.textContent = dark ? 'Light Mode'    : 'Dark Mode';
+        });
     }
 
-    btn.addEventListener('click', () => {
-        setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+        });
     });
 
     // Sync icon and logo on page load

@@ -12,10 +12,45 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/expedition.css">
     <link rel="icon" type="image/svg+xml" href="assets/logos/logo-light.svg">
     <script>(function(){try{var t=localStorage.getItem('dwa-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})()</script>
 </head>
 <body>
+
+    <!-- Expert Mobile Menu Overlay (Untitled UI Style) -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay">
+        <div class="mobile-menu-container">
+            <div class="mobile-menu-header">
+                <div class="mobile-logo">
+                    <img src="assets/logos/logo-light.svg" alt="DriveWithAndy" class="logo-img-final">
+                </div>
+                <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mobile-menu-body">
+                <nav class="mobile-primary-nav">
+                    <ul>
+                        <li><a href="#tours">Tours</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#fleet">Our Fleet</a></li>
+                        <li><a href="#resources">Resources</a></li>
+                        <li><a href="#" id="contact-menu-trigger">Contact</a></li>
+                    </ul>
+                </nav>
+                
+            </div>
+            
+            <div class="mobile-menu-footer">
+                <a href="#" data-wa="true" class="btn btn-primary btn-menu-cta">Book Journey Now <i class="fas fa-chevron-right"></i></a>
+                <button class="theme-toggle btn-menu-secondary" id="theme-toggle-mobile-new">
+                    <i class="fas fa-moon"></i> <span class="theme-label">Theme Mode</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Sticky Header (Glassmorphic) -->
     <header class="glass-header" id="main-header">
@@ -296,7 +331,7 @@
         <div class="container">
             <div class="footer-inner">
                 <div class="footer-brand">
-                    <img src="assets/logos/logo-dark.svg" alt="DriveWithAndy" class="logo-img-footer">
+                    <img src="assets/logos/logo-light.svg" alt="DriveWithAndy" class="logo-img-footer">
                     <p>Your premium gateway to the sights, sounds, and soul of Ghana. Authentic tours driven by local expertise and genuine care.</p>
                 </div>
                 <div class="footer-links">

@@ -634,19 +634,43 @@ function initHeader() {
 // ── Mobile Menu ───────────────────────────────────────────────
 
 function initMobileMenu() {
-    const toggle   = document.querySelector('.mobile-menu-toggle');
-    const navLinks = document.querySelector('.nav-links');
-    if (!toggle || !navLinks) return;
+    const toggle      = document.querySelector('.mobile-menu-toggle');
+    const overlay     = document.getElementById('mobile-menu-overlay');
+    const closeBtn    = document.getElementById('mobile-menu-close');
+    
+    if (!toggle || !overlay || !closeBtn) return;
 
-    toggle.addEventListener('click', () => {
-        const open = navLinks.classList.toggle('mobile-open');
-        Object.assign(navLinks.style, open ? {
-            display: 'flex', flexDirection: 'column', position: 'absolute',
-            top: '100%', left: '0', width: '100%',
-            background: 'var(--primary)', padding: '2rem', gap: '1.25rem',
-            boxShadow: '0 20px 40px rgba(3,38,7,0.3)', zIndex: '999',
-        } : { display: '' });
-        toggle.innerHTML = open ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+    const openMenu = () => {
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeMenu = () => {
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+
+    toggle.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    
+    // Close if clicking the backdrop (outside container)
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeMenu();
+    });
+
+    // Expert Touch: Auto-close menu when clicking any link
+    overlay.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
+
+    // Also close if special triggers inside the menu are clicked
+    const extraTriggers = [
+        'contact-menu-trigger',
+        'contact-menu-grid-trigger'
+    ];
+    
+    extraTriggers.forEach(id => {
+        document.getElementById(id)?.addEventListener('click', closeMenu);
     });
 }
 

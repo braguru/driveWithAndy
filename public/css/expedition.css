@@ -460,21 +460,41 @@
 
 .tour-card-actions .btn {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     text-align: center;
     font-size: 0.82rem;
     padding: 0.6rem 0.75rem;
+    border: 1.5px solid transparent;
+}
+
+/* Ensure primary button has matching border height */
+.tour-card-actions .btn-primary {
+    border-color: var(--heritage-gold);
+}
+
+/* Ensure outline button has matching border height */
+.tour-card-actions .btn-outline {
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .tour-card-actions .btn-outline {
+    border-color: var(--heritage-gold);
+    color: var(--heritage-gold);
 }
 
 /* Email button — own centered row below the two main buttons */
 .tour-email-btn {
-    flex: 0 0 100%;
-    width: fit-content;
-    margin: 0 auto;
+    flex: 1 0 100%;
+    width: 100%;
+    margin: 0;
     padding: 0.35rem 1.1rem;
     background: transparent;
     border: 1.5px solid var(--surface-dim);
     color: var(--on-surface-variant);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -547,5 +567,13 @@
         height: 260px;
     }
 
-    .tour-card-actions { flex-direction: column; }
+    .tour-card-actions { 
+        flex-direction: column; 
+        align-items: stretch;
+    }
+    .tour-card-actions .btn,
+    .tour-card-actions .tour-email-btn {
+        width: 100%;
+        flex: 1 1 auto;
+    }
 }
