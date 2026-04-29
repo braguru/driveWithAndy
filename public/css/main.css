@@ -1724,6 +1724,121 @@ img { display: block; max-width: 100%; }
 }
 
 /* ============================================================
+   RENTAL POLICIES & TERMS
+   ============================================================ */
+.rental-policies {
+    background: var(--surface);
+}
+
+.policies-header {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto 4rem;
+}
+
+.policies-header .section-title {
+    margin-bottom: 1rem;
+}
+
+.policy-groups {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem;
+}
+
+.policy-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.policy-group-title {
+    font-family: 'Noto Serif', serif;
+    font-size: 1.25rem;
+    color: var(--heritage-gold);
+    border-bottom: 2px solid var(--outline-variant);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.policy-card {
+    background: var(--surface-container-lowest);
+    padding: 1.75rem;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-editorial);
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.policy-card:hover {
+    transform: translateX(5px);
+    border-left-color: var(--heritage-gold);
+    box-shadow: var(--shadow-hover);
+}
+
+.policy-icon-wrap {
+    margin-bottom: 1rem;
+    color: var(--heritage-gold);
+    font-size: 1.25rem;
+}
+
+.policy-card h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--heading-color);
+}
+
+.policy-card p {
+    font-size: 0.88rem;
+    color: var(--on-surface-variant);
+    line-height: 1.6;
+}
+
+.policy-card ul {
+    list-style: none;
+    margin-top: 0.5rem;
+}
+
+.policy-card ul li {
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+    position: relative;
+    padding-left: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.policy-card ul li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--heritage-gold);
+}
+
+.refund-highlight {
+    background: rgba(246, 178, 51, 0.05);
+    border: 1px dashed var(--heritage-gold);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-top: 1rem;
+}
+
+.refund-highlight strong {
+    color: var(--heading-color);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+@media (max-width: 1024px) {
+    .policy-groups { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .policy-groups { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
    FOOTER
    ============================================================ */
 .main-footer {
@@ -2646,3 +2761,24 @@ img { display: block; max-width: 100%; }
 
 /* Section subtitle */
 [data-theme="dark"] .section-subtitle { color: var(--on-surface-variant); }
+
+/* Rental Policies dark mode adjustments */
+[data-theme="dark"] .policy-card {
+    background: var(--surface-container-low);
+    border-color: var(--outline-variant);
+}
+
+[data-theme="dark"] .policy-card:hover {
+    background: var(--surface-container-lowest);
+    border-left-color: var(--heritage-gold);
+}
+
+[data-theme="dark"] .policy-group-title {
+    color: var(--heritage-gold);
+    border-bottom-color: var(--outline-variant);
+}
+
+[data-theme="dark"] .refund-highlight {
+    background: rgba(246, 178, 51, 0.03);
+    border-color: rgba(246, 178, 51, 0.2);
+}
