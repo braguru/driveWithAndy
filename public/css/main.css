@@ -1678,8 +1678,10 @@ img { display: block; max-width: 100%; }
 
 .resource-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 360px));
     gap: 1.5rem;
+    margin-bottom: 4rem;
+    justify-content: center;
 }
 
 .resource-card {
