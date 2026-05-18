@@ -229,6 +229,16 @@ img { display: block; max-width: 100%; }
     transition: all 0.3s ease;
 }
 
+/* Header logo: theme-aware swap between light/dark variants.
+   Unscrolled header sits over the dark hero, so always show the
+   white-text (dark-mode) variant until the header gains a themed bg. */
+.logo .logo-img-light { display: none; }
+.logo .logo-img-dark { display: block; }
+.glass-header.scrolled .logo .logo-img-dark { display: none; }
+.glass-header.scrolled .logo .logo-img-light { display: block; }
+[data-theme="dark"] .glass-header.scrolled .logo .logo-img-light { display: none; }
+[data-theme="dark"] .glass-header.scrolled .logo .logo-img-dark { display: block; }
+
 .nav-links {
     display: flex;
     list-style: none;
