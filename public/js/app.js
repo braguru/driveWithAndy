@@ -150,7 +150,7 @@ function renderStars(rating) {
 }
 
 function tourCardHTML(place) {
-    const imgSrc    = place.photo || 'content/expeditions/cape_coast_castle.jpg';
+    const imgSrc    = place.photo || 'content/expeditions/kakum_national_park.jpg';
     const summary   = place.summary || 'An incredible destination awaiting your exploration with Andy as your guide.';
     const tag       = place.type || 'Attraction';
     const detailUrl = `expedition.html?id=${place.id}`;
@@ -166,7 +166,7 @@ function tourCardHTML(place) {
             <div class="img-skeleton"></div>
             <img src="${imgSrc}" alt="${place.name}" class="tour-img img-fade" loading="lazy"
                  onload="this.classList.add('loaded');this.previousElementSibling.style.display='none'"
-                 onerror="this.src='content/expeditions/cape_coast_castle.jpg';this.classList.add('loaded');this.previousElementSibling.style.display='none'">
+                 onerror="this.onerror=null;this.src='content/expeditions/kakum_national_park.jpg';this.classList.add('loaded');this.previousElementSibling.style.display='none'">
         </div>
         <div class="tour-details">
             <span class="tour-tag">${tag}</span>
