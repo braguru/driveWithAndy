@@ -132,9 +132,20 @@ let selectedPlaces  = new Map(); // id → name
 let toursOffset     = 0;
 let activeFilter    = 'All';
 let searchQuery     = '';
+let searchTimer     = null;
+let toursRequestId  = 0;      // guards against out-of-order responses
+let chipsBound      = false;
+let loadingMore     = false;
 const TOURS_PAGE    = 6;
+const SEARCH_DEBOUNCE = 250;
 
 // ── Helpers ───────────────────────────────────────────────────
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[ch]));
+}
 
 function renderStars(rating) {
     if (!rating) return '';
@@ -159,7 +170,7 @@ function tourCardHTML(place) {
     return `
     <div class="tour-card${selected ? ' selected' : ''}"
          data-id="${place.id}" data-name="${place.name.replace(/"/g, '&quot;')}"
-         data-type="${tag}" data-name-search="${place.name.toLowerCase()}"
+         data-type="${tag}"
          onclick="toggleSelectPlace(event, '${place.id}', this)">
         <div class="tour-select-badge"><i class="fas fa-check"></i></div>
         <div class="tour-image-wrapper">
@@ -263,30 +274,33 @@ function emailSelected() {
 
 // ── Search & Filter ───────────────────────────────────────────
 
-function applySearchFilter() {
-    const cards = document.querySelectorAll('#tour-grid .tour-card');
-    cards.forEach(card => {
-        const nameMatch = !searchQuery || card.dataset.nameSearch.includes(searchQuery.toLowerCase());
-        const typeMatch = activeFilter === 'All' || card.dataset.type === activeFilter;
-        card.style.display = (nameMatch && typeMatch) ? '' : 'none';
-    });
+// The server filters the full attraction list, so the search and the chips
+// cover every destination, not only the cards already on screen.
+
+function toursQuery(offset) {
+    const params = new URLSearchParams({ offset, limit: TOURS_PAGE });
+    if (searchQuery) params.set('q', searchQuery);
+    if (activeFilter && activeFilter !== 'All') params.set('type', activeFilter);
+    return `/api/places/attractions?${params}`;
 }
 
-function buildFilterChips(places) {
-    const types   = ['All', ...new Set(places.map(p => p.type).filter(Boolean))];
+function buildFilterChips(types) {
     const wrapper = document.getElementById('tour-filters');
     if (!wrapper) return;
 
-    wrapper.innerHTML = types.map(t => `
-        <button class="filter-chip${t === 'All' ? ' active' : ''}" data-type="${t}">${t}</button>
+    const all = ['All', ...types];
+    wrapper.innerHTML = all.map(t => `
+        <button class="filter-chip${t === activeFilter ? ' active' : ''}" data-type="${t}">${t}</button>
     `).join('');
 
+    if (chipsBound) return;
+    chipsBound = true;
     wrapper.addEventListener('click', e => {
         const chip = e.target.closest('.filter-chip');
-        if (!chip) return;
+        if (!chip || chip.dataset.type === activeFilter) return;
         activeFilter = chip.dataset.type;
         wrapper.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c === chip));
-        applySearchFilter();
+        renderTours();
     });
 }
 
@@ -294,17 +308,32 @@ function initSearch() {
     const input = document.getElementById('tour-search');
     if (!input) return;
     input.addEventListener('input', e => {
-        searchQuery = e.target.value.trim();
-        applySearchFilter();
+        const value = e.target.value.trim();
+        if (value === searchQuery) return;
+        searchQuery = value;
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(renderTours, SEARCH_DEBOUNCE);
     });
 }
 
 // ── Render: Tours ─────────────────────────────────────────────
 
+let searchInitialised = false;
+
 async function renderTours() {
     const grid = document.getElementById('tour-grid');
     const btn  = document.getElementById('view-more-tours');
     if (!grid) return;
+
+    const requestId = ++toursRequestId;
+    loadingMore = false;
+
+    // Browsers restore the search box text on reload, so read it back here.
+    // Otherwise the box and the results would disagree on first paint.
+    if (!searchInitialised) {
+        const input = document.getElementById('tour-search');
+        if (input) searchQuery = input.value.trim();
+    }
 
     grid.innerHTML = Array(TOURS_PAGE).fill(0).map(() => `
         <div class="tour-card skeleton">
@@ -315,23 +344,33 @@ async function renderTours() {
                 <div class="skeleton-line"></div>
             </div>
         </div>`).join('');
+    if (btn) btn.style.display = 'none';
 
     try {
-        const res  = await fetch(`/api/places/attractions?offset=0&limit=${TOURS_PAGE}`);
+        const res  = await fetch(toursQuery(0));
         const data = await res.json();
+        if (requestId !== toursRequestId) return;   // a newer search already won
 
         allLoadedPlaces = data.items;
-        grid.innerHTML  = data.items.map(tourCardHTML).join('');
         toursOffset     = TOURS_PAGE;
 
-        buildFilterChips(data.items);
-        initSearch();
+        grid.innerHTML = data.items.length
+            ? data.items.map(tourCardHTML).join('')
+            : `<p class="tours-empty">No destinations match "${escapeHtml(searchQuery)}"${activeFilter !== 'All' ? ` in ${escapeHtml(activeFilter)}` : ''}. Try a different search.</p>`;
+
+        buildFilterChips(data.types || []);
+        if (!searchInitialised) {
+            initSearch();
+            searchInitialised = true;
+        }
 
         if (btn) {
             btn.style.display = data.hasMore ? 'inline-flex' : 'none';
+            btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-compass"></i> View More Expeditions';
         }
     } catch (err) {
+        if (requestId !== toursRequestId) return;
         console.error('Failed to load attractions:', err);
         grid.innerHTML = `<p class="error-msg">Could not load attractions. Please refresh the page.</p>`;
     }
@@ -340,27 +379,30 @@ async function renderTours() {
 async function loadMoreTours() {
     const grid = document.getElementById('tour-grid');
     const btn  = document.getElementById('view-more-tours');
-    if (!grid || !btn) return;
+    if (!grid || !btn || loadingMore) return;
 
+    loadingMore = true;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
 
+    const requestId = toursRequestId;
+
     try {
-        const res  = await fetch(`/api/places/attractions?offset=${toursOffset}&limit=${TOURS_PAGE}`);
+        const res  = await fetch(toursQuery(toursOffset));
         const data = await res.json();
+        loadingMore = false;
+        if (requestId !== toursRequestId) return;   // search changed mid-flight
 
         allLoadedPlaces.push(...data.items);
         data.items.forEach(p => grid.insertAdjacentHTML('beforeend', tourCardHTML(p)));
         toursOffset += TOURS_PAGE;
 
-        // Rebuild filter chips with all loaded types
-        buildFilterChips(allLoadedPlaces);
-        applySearchFilter();
-
         btn.disabled = false;
         btn.style.display = data.hasMore ? 'inline-flex' : 'none';
         if (data.hasMore) btn.innerHTML = '<i class="fas fa-compass"></i> View More Expeditions';
     } catch (err) {
+        loadingMore = false;
+        if (requestId !== toursRequestId) return;
         console.error('Failed to load more:', err);
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-compass"></i> View More Expeditions';
