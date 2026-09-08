@@ -28,11 +28,15 @@ router.get('/photo', async (req, res) => {
     }
 });
 
-// GET /api/places/attractions?offset=0&limit=6
-// Returns paginated list of Ghana tourist attractions
+// GET /api/places/attractions?offset=0&limit=6&q=&type=
+// Returns a paginated list of Ghana tourist attractions.
+// `q` and `type` filter the full cached list, not just the current page,
+// so the frontend search covers every destination we know about.
 router.get('/attractions', async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
     const limit  = parseInt(req.query.limit)  || 6;
+    const query  = (req.query.q || '').trim().toLowerCase();
+    const type   = (req.query.type || '').trim();
 
     try {
         const all = await places.searchAttractions();
@@ -51,10 +55,22 @@ router.get('/attractions', async (req, res) => {
             openNow:     p.regularOpeningHours?.openNow ?? null,
         }));
 
+        // Every type we know about, so the filter chips never depend on
+        // which page happens to be loaded.
+        const types = [...new Set(formatted.map(p => p.type).filter(Boolean))].sort();
+
+        const matches = formatted.filter(p => {
+            if (type && p.type !== type) return false;
+            if (!query) return true;
+            return [p.name, p.type, p.address]
+                .some(field => field && field.toLowerCase().includes(query));
+        });
+
         res.json({
-            total:   formatted.length,
-            hasMore: offset + limit < formatted.length,
-            items:   formatted.slice(offset, offset + limit),
+            total:   matches.length,
+            hasMore: offset + limit < matches.length,
+            types,
+            items:   matches.slice(offset, offset + limit),
         });
     } catch (err) {
         console.error('Places attractions error:', err.message);
