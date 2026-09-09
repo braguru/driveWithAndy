@@ -17,10 +17,19 @@ app.get('/api/config', (req, res) => {
     res.json({ whatsapp: process.env.WHATSAPP_NUMBER });
 });
 
+// Admin page. Kept out of search results; the write routes below are what
+// is actually protected.
+app.get('/admin', (req, res) => {
+    res.set('X-Robots-Tag', 'noindex, nofollow');
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 // API routes
 app.use('/api', require('./src/routes/images'));
+app.use('/api', require('./src/routes/media'));
 app.use('/api/places', require('./src/routes/places'));
 app.use('/api', require('./src/routes/contact'));
+app.use('/api/admin', require('./src/routes/admin'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`DriveWithAndy → http://localhost:${PORT}`));

@@ -57,6 +57,9 @@ A premium web application showcasing authentic Ghana tours, private driver servi
    | `SMTP_PASSWORD` | Yes (for contact form) | SMTP password or app password. |
    | `SMTP_FROM` | Yes (for contact form) | The "from" address on outgoing mail. |
    | `SMTP_TO` | Yes (for contact form) | Where enquiry emails are delivered. |
+   | `BLOB_READ_WRITE_TOKEN` | Yes (for the admin page) | Vercel Blob store token. Without it the site serves the images committed in `content/` and `/admin` is disabled. |
+   | `ADMIN_EMAIL` | Yes (for the admin page) | The one address allowed to sign in to `/admin`. |
+   | `ADMIN_SESSION_SECRET` | Yes (for the admin page) | Signs the admin session cookie. Use a long random string. Changing it signs everyone out. |
 
    Never commit `.env`. It is gitignored. The `GOOGLE_MAP_API` value is a secret, keep it out of version control and out of these docs.
 
@@ -108,8 +111,60 @@ A premium web application showcasing authentic Ghana tours, private driver servi
 - `GET /api/places/attractions?offset=0&limit=6`: Paginated list of Ghana attractions from the Places API.
 - `GET /api/places/:placeId`: Full detail for one destination (photos, reviews, hours, location).
 - `GET /api/places/photo?name=...&w=800`: Proxies a Google place photo through the server so the key stays hidden and CORS is handled.
-- `GET /api/images/:folder`: Lists image files in a `content/` subfolder (used by the hero slider and gallery).
+- `GET /api/images/:folder`: Lists image files in a `content/` subfolder. Superseded by `/api/media`, kept as a fallback.
+- `GET /api/media/:section`: Photos and videos for `hero`, `gallery` or `fleet`, in the order set in the admin page. Falls back to `content/` if Blob is unavailable.
 - `POST /api/contact`: Sends an enquiry email via SMTP.
+
+Admin only, all behind a signed session cookie except the two sign-in routes:
+
+- `POST /api/admin/request-code` and `POST /api/admin/verify-code`: Emailed one-time code sign-in.
+- `GET /api/admin/media`, `POST /api/admin/media`, `PATCH /api/admin/media/:id`, `DELETE /api/admin/media/:id`, `POST /api/admin/media/:id/restore`, `POST /api/admin/reorder`.
+- `POST /api/admin/blob-token`: Mints a short-lived token so the browser can upload straight to Blob.
+
+## 🖼️ Media and the admin page
+
+Andy manages the hero slider, gallery and fleet photos himself at `/admin`.
+He signs in with a six digit code emailed to `ADMIN_EMAIL`, then uploads,
+captions, reorders and removes media. Removal is a soft delete, so anything
+taken down can be restored.
+
+Files live in Vercel Blob, not in the repo. A single `manifest.json` in the
+same store records the caption, tag, section and order of each one. The
+server caches that manifest for 60 seconds, so a change reaches every visitor
+within about a minute.
+
+### First-time setup
+
+1. Vercel dashboard → **Storage** → create a **Blob** store, connected to this
+   project and including the **Development** environment.
+2. `vercel env pull` to get `BLOB_READ_WRITE_TOKEN` locally.
+3. Set `ADMIN_EMAIL` and `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`)
+   locally and in the Vercel dashboard.
+4. Move the existing images out of `content/` and into Blob:
+
+   ```bash
+   node scripts/migrate-media.js            # dry run, lists what it would do
+   node scripts/migrate-media.js --commit   # actually uploads
+   ```
+
+   The script carries the old hardcoded gallery captions across. Running it
+   twice is safe; files already in the manifest are skipped.
+
+The files in `content/` stay in the repo on purpose. If Blob is unreachable
+the site serves those instead of showing empty sections.
+
+### Things worth knowing
+
+- Uploads go from the browser straight to Blob, because Vercel caps request
+  bodies to serverless functions at 4.5MB and videos are far bigger. The
+  server only mints a short-lived token and then confirms with Blob that the
+  file arrived before recording it.
+- Limits are 15MB per image and 200MB per video. Accepted types are jpeg,
+  png, webp, avif and mp4.
+- The Popular Expeditions cards are **not** editable here. Those photos come
+  from the Google Places API.
+- If `ADMIN_EMAIL` is compromised, so is the site's imagery. Rotating
+  `ADMIN_SESSION_SECRET` in Vercel signs out every session at once.
 
 ## 🚀 Deployment (Vercel)
 
