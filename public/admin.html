@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Media Manager — DriveWithAndy</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&family=Noto+Serif:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+<!-- ── Sign in ─────────────────────────────────────────────── -->
+<section class="admin-auth" id="admin-auth" hidden>
+    <div class="admin-auth-card">
+        <h1>Media Manager</h1>
+
+        <form id="email-form" class="admin-step">
+            <p class="admin-hint">Enter your email and we will send you a sign-in code.</p>
+            <label for="admin-email">Email</label>
+            <input type="email" id="admin-email" autocomplete="email" required placeholder="you@example.com">
+            <button type="submit" class="btn btn-primary admin-btn-block">Send code</button>
+        </form>
+
+        <form id="code-form" class="admin-step" hidden>
+            <p class="admin-hint">We sent a 6-digit code. It expires in 10 minutes.</p>
+            <label for="admin-code">Code</label>
+            <input type="text" id="admin-code" inputmode="numeric" autocomplete="one-time-code"
+                   maxlength="6" required placeholder="000000" class="admin-code-input">
+            <button type="submit" class="btn btn-primary admin-btn-block">Sign in</button>
+            <button type="button" class="admin-link" id="back-to-email">Use a different email</button>
+        </form>
+
+        <p class="admin-error" id="auth-error" hidden></p>
+    </div>
+</section>
+
+<!-- ── Manager ─────────────────────────────────────────────── -->
+<main class="admin-main" id="admin-main" hidden>
+    <header class="admin-header">
+        <div>
+            <h1>Media Manager</h1>
+            <p class="admin-hint">Changes reach the live site within a minute.</p>
+        </div>
+        <div class="admin-header-actions">
+            <a href="/" class="admin-link" target="_blank" rel="noopener">View site <i class="fas fa-arrow-up-right-from-square"></i></a>
+            <button class="admin-link" id="logout-btn">Sign out</button>
+        </div>
+    </header>
+
+    <nav class="admin-tabs" id="admin-tabs">
+        <button class="admin-tab active" data-section="hero">Hero slider</button>
+        <button class="admin-tab" data-section="gallery">Gallery</button>
+        <button class="admin-tab" data-section="fleet">Fleet</button>
+    </nav>
+
+    <section class="admin-upload">
+        <h2>Add to <span id="upload-section-name">hero slider</span></h2>
+        <div class="admin-upload-grid">
+            <label class="admin-file" id="file-label">
+                <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4">
+                <i class="fas fa-cloud-arrow-up"></i>
+                <span id="file-label-text">Choose a photo or video</span>
+            </label>
+            <input type="text" id="upload-caption" placeholder="Caption, for example: Andy at Cape Coast Castle" maxlength="200">
+            <input type="text" id="upload-tag" placeholder="Tag, for example: Cape Coast" maxlength="40">
+            <button class="btn btn-primary" id="upload-btn" disabled>Upload</button>
+        </div>
+        <div class="admin-progress" id="upload-progress" hidden>
+            <div class="admin-progress-bar" id="upload-progress-bar"></div>
+        </div>
+        <p class="admin-error" id="upload-error" hidden></p>
+    </section>
+
+    <section class="admin-list-wrap">
+        <div class="admin-list-head">
+            <h2>On the site</h2>
+            <p class="admin-hint" id="reorder-hint">Drag a card to change the order.</p>
+        </div>
+        <div class="admin-list" id="media-list"></div>
+        <p class="admin-empty" id="media-empty" hidden>Nothing here yet. Upload something above.</p>
+    </section>
+
+    <section class="admin-list-wrap" id="deleted-wrap" hidden>
+        <div class="admin-list-head">
+            <h2>Removed</h2>
+            <p class="admin-hint">Hidden from the site. Nothing is deleted for good.</p>
+        </div>
+        <div class="admin-list admin-list-deleted" id="deleted-list"></div>
+    </section>
+</main>
+
+<div class="admin-toast" id="toast" hidden></div>
+
+<script src="js/theme.js"></script>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

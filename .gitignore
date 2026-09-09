@@ -4,3 +4,5 @@ node_modules/
 .DS_Store
 .playwright-mcp/
 .superpowers/
+.vercel
+.env*

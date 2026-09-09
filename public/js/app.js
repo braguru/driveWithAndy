@@ -66,10 +66,14 @@ const TOURS_VISIBLE = new Set([
 
 // ── Fetch helpers ─────────────────────────────────────────────
 
-async function fetchImages(folder) {
-    const res = await fetch(`/api/images/${encodeURIComponent(folder)}`);
-    if (!res.ok) throw new Error(`Could not load images from ${folder}`);
-    return res.json();
+// Media comes from the manifest Andy edits in the admin page. If Blob is
+// unreachable the server falls back to the files still in content/, so this
+// returns the same shape either way.
+async function fetchMedia(section) {
+    const res = await fetch(`/api/media/${encodeURIComponent(section)}`);
+    if (!res.ok) throw new Error(`Could not load media for ${section}`);
+    const data = await res.json();
+    return Array.isArray(data.items) ? data.items : [];
 }
 
 // ── Render: Hero Slides ───────────────────────────────────────
@@ -79,14 +83,14 @@ async function renderHeroSlides() {
     const dotsContainer = document.getElementById('hero-dots');
     if (!container) return;
 
-    const paths = await fetchImages('expeditions');
+    const items = (await fetchMedia('hero')).filter(i => i.kind !== 'video');
 
-    container.innerHTML = paths.map((src, i) => `
-        <div class="hero-slide${i === 0 ? ' active' : ''}" style="background-image: url('${src}')"></div>
+    container.innerHTML = items.map((item, i) => `
+        <div class="hero-slide${i === 0 ? ' active' : ''}" style="background-image: url('${item.url.replace(/'/g, "\\'")}')"></div>
     `).join('');
 
     if (dotsContainer) {
-        dotsContainer.innerHTML = paths.map((_, i) => `
+        dotsContainer.innerHTML = items.map((_, i) => `
             <span class="hero-dot${i === 0 ? ' active' : ''}"></span>
         `).join('');
     }
@@ -409,27 +413,6 @@ async function loadMoreTours() {
     }
 }
 
-/// ── Gallery Metadata (keyed by filename) ─────────────────────
-
-const GALLERY_META = {
-    'WhatsApp Image 2026-04-04 at 11.26.47 AM (1).jpeg': { tag: 'Cape Coast',    label: 'Andy at Cape Coast Castle' },
-    'WhatsApp Image 2026-04-04 at 11.26.47 AM.jpeg':     { tag: 'Heritage',      label: 'Cape Coast Castle' },
-    'WhatsApp Image 2026-04-04 at 11.26.46 AM.jpeg':     { tag: 'Group Tour',    label: 'Group Expedition' },
-    'WhatsApp Image 2026-04-04 at 11.26.46 AM (1).jpeg': { tag: 'On Location',   label: 'With Guests, Central Region' },
-    'WhatsApp Image 2026-04-04 at 11.26.34 AM.jpeg':     { tag: 'Safari',        label: 'Safari Excursion' },
-    'WhatsApp Image 2026-04-04 at 11.26.34 AM (1).jpeg': { tag: 'Wildlife',      label: 'Wildlife Encounter' },
-    'WhatsApp Image 2026-04-04 at 11.26.33 AM.jpeg':     { tag: 'Family',        label: 'Family Tour' },
-    'WhatsApp Image 2026-04-04 at 11.26.33 AM (1).jpeg': { tag: 'Highlights',    label: 'Tour Moments' },
-    'WhatsApp Image 2026-04-04 at 11.26.32 AM.jpeg':     { tag: 'Accra',         label: 'Heritage Walk, Accra' },
-    'WhatsApp Image 2026-04-04 at 11.26.29 AM.jpeg':     { tag: 'Volta Region',  label: 'Volta River Cruise' },
-    'WhatsApp Image 2026-04-04 at 11.26.29 AM (1).jpeg': { tag: 'Central Coast', label: 'Coastal Drive' },
-    'WhatsApp Image 2026-04-04 at 11.26.22 AM.jpeg':     { tag: 'The Fleet',     label: "Andy's Premium 4x4" },
-    'WhatsApp Image 2026-04-04 at 2.14.39 PM.jpeg':      { tag: 'On the Road',   label: 'On the Road with Andy' },
-    'WhatsApp Image 2026-04-04 at 2.14.39 PM (1).jpeg':  { tag: 'Expedition',    label: 'Expedition Moment' },
-    'WhatsApp Image 2026-04-04 at 2.14.39 PM (2).jpeg':  { tag: 'Experience',    label: 'Tour Experience' },
-    'WhatsApp Image 2026-04-04 at 2.14.40 PM.jpeg':      { tag: 'Adventure',     label: 'Ghana Adventure' },
-};
-
 // ── Render: Gallery ───────────────────────────────────────────
 
 const SIZES = ['tall', '', 'wide', '', '', 'tall', '', 'wide', '', ''];
@@ -440,14 +423,13 @@ async function renderGallery() {
     const gallery = document.getElementById('expedition-gallery');
     if (!gallery) return;
 
-    const paths = await fetchImages('gallery');
-    const images = paths.filter(p => !p.endsWith('.mp4') && !p.endsWith('.mov'));
+    const items = (await fetchMedia('gallery')).filter(i => i.kind !== 'video');
 
-    galleryImages = images.map(src => {
-        const filename = src.split('/').pop();
-        const meta     = GALLERY_META[filename] || { tag: 'On the Road', label: 'Ghana with Andy' };
-        return { src, ...meta };
-    });
+    galleryImages = items.map(item => ({
+        src:   item.url,
+        tag:   item.tag || 'On the Road',
+        label: item.caption || 'Ghana with Andy',
+    }));
 
     gallery.innerHTML = galleryImages.map((item, i) => {
         const size = SIZES[i % SIZES.length];
@@ -524,16 +506,16 @@ async function renderFleet() {
     const dotsEl = document.getElementById('fleet-dots');
     if (!slider) return;
 
-    const paths = await fetchImages('fleet');
+    const items = (await fetchMedia('fleet')).filter(i => i.kind !== 'video');
 
-    slider.innerHTML = paths.map((src, i) => `
+    slider.innerHTML = items.map((item, i) => `
         <div class="fleet-slide${i === 0 ? ' active' : ''}">
-            <img src="${src}" alt="Fleet Vehicle ${i + 1}" loading="lazy">
+            <img src="${item.url}" alt="${escapeHtml(item.caption || `Fleet Vehicle ${i + 1}`)}" loading="lazy">
         </div>
     `).join('');
 
     if (dotsEl) {
-        dotsEl.innerHTML = paths.map((_, i) => `
+        dotsEl.innerHTML = items.map((_, i) => `
             <span class="fleet-dot${i === 0 ? ' active' : ''}"></span>
         `).join('');
     }
