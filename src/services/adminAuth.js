@@ -5,7 +5,7 @@
 const crypto = require('crypto');
 const blob   = require('./blob');
 
-const PENDING_PATH  = 'auth/pending.json';
+const RATE_PATH     = 'auth/rate.json';
 const CODE_TTL      = 10 * 60 * 1000;      // code valid for 10 minutes
 const SESSION_TTL   = 7 * 24 * 60 * 60;    // cookie lives 7 days (seconds)
 const MAX_ATTEMPTS  = 3;
@@ -44,32 +44,53 @@ function hashCode(code) {
 }
 
 // ── One-time codes ────────────────────────────────────────────
-// Serverless functions share no memory between requests, so the pending code
-// is kept in the Blob store. Only an HMAC of the code is stored, keyed by
-// ADMIN_SESSION_SECRET, so the record is useless to anyone who reads it. That
-// is deliberate: the store the site uses has to be public for media URLs to
-// work, and a write that the store rejected would lock everyone out.
+// Serverless functions share no memory between requests, so pending codes are
+// kept in the Blob store. Only an HMAC of the code is stored, keyed by
+// ADMIN_SESSION_SECRET, so a record is useless to anyone who reads it. The
+// store has to be public for media URLs to work, and a rejected private write
+// would lock everyone out, so public it is.
 const RECORD_ACCESS = 'public';
 
-async function readPending() {
+// Each code goes to its own path. Reads of a public blob are served by the
+// CDN and can be up to a minute stale, so reusing one path would mean a code
+// requested moments after a previous one could be checked against the old
+// record. A path that has never been read cannot be a cache hit.
+function codePath(handle) {
+    return `auth/codes/${handle}.json`;
+}
+
+async function readJsonSafely(path) {
     try {
-        const { data } = await blob.readJson(PENDING_PATH, RECORD_ACCESS);
-        return data || { requests: [] };
+        const { data } = await blob.readJson(path, RECORD_ACCESS);
+        return data;
     } catch (err) {
-        console.error('Auth record read failed:', err.message);
-        return { requests: [] };
+        console.error(`Auth record read failed for ${path}:`, err.message);
+        return null;
+    }
+}
+
+async function sweepExpiredCodes() {
+    try {
+        const cutoff = Date.now() - CODE_TTL;
+        const stale  = (await blob.listPrefix('auth/codes/'))
+            .filter(b => new Date(b.uploadedAt).getTime() < cutoff);
+
+        for (const b of stale) await blob.remove(b.pathname);
+    } catch (err) {
+        // Housekeeping only. Never block a sign-in on it.
+        console.error('Could not sweep expired codes:', err.message);
     }
 }
 
 async function requestCode(email, sendMail) {
-    const record  = await readPending();
-    const now     = Date.now();
-    const recent  = (record.requests || []).filter(ts => now - ts < REQUEST_WINDOW);
-
     // Wrong email gets the same answer as the right one. The page must not
     // reveal who the admin is. Nothing is recorded, because only real sends
     // count towards the limit.
     if (normalise(email) !== adminEmail()) return { sent: false, rateLimited: false };
+
+    const now    = Date.now();
+    const rate   = (await readJsonSafely(RATE_PATH)) || { requests: [] };
+    const recent = (rate.requests || []).filter(ts => now - ts < REQUEST_WINDOW);
 
     // Caps how often Andy's inbox can be mailed. Counting only actual sends
     // means a stranger hitting this endpoint cannot lock him out.
@@ -77,36 +98,42 @@ async function requestCode(email, sendMail) {
 
     recent.push(now);
 
-    const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+    // A code that is never used would otherwise sit in the store forever.
+    await sweepExpiredCodes();
 
-    await blob.writeJson(PENDING_PATH, {
+    const handle = crypto.randomUUID();
+    const code   = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+
+    await blob.writeJson(codePath(handle), {
         codeHash:  hashCode(code),
         expiresAt: now + CODE_TTL,
         attempts:  0,
-        requests:  recent,
     }, RECORD_ACCESS);
 
+    await blob.writeJson(RATE_PATH, { requests: recent }, RECORD_ACCESS);
+
     await sendMail(code);
-    return { sent: true, rateLimited: false };
+    return { sent: true, rateLimited: false, handle };
 }
 
-async function verifyCode(email, code) {
+async function verifyCode(email, code, handle) {
     if (normalise(email) !== adminEmail()) return { ok: false, reason: 'invalid' };
+    if (!handle || !/^[0-9a-f-]{36}$/i.test(handle)) return { ok: false, reason: 'expired' };
 
-    const record = await readPending();
-    if (!record.codeHash)                 return { ok: false, reason: 'expired' };
-    if (Date.now() > record.expiresAt)    return { ok: false, reason: 'expired' };
-    if (record.attempts >= MAX_ATTEMPTS)  return { ok: false, reason: 'locked' };
+    const record = await readJsonSafely(codePath(handle));
+    if (!record || !record.codeHash)     return { ok: false, reason: 'expired' };
+    if (Date.now() > record.expiresAt)   return { ok: false, reason: 'expired' };
+    if (record.attempts >= MAX_ATTEMPTS) return { ok: false, reason: 'locked' };
 
     if (!safeEqual(hashCode(code), record.codeHash)) {
-        await blob.writeJson(PENDING_PATH, {
+        await blob.writeJson(codePath(handle), {
             ...record, attempts: record.attempts + 1,
         }, RECORD_ACCESS);
         return { ok: false, reason: 'invalid' };
     }
 
     // Burn the code so it cannot be replayed.
-    await blob.writeJson(PENDING_PATH, { requests: record.requests || [] }, RECORD_ACCESS);
+    await blob.remove(codePath(handle));
     return { ok: true, token: createSession(adminEmail()) };
 }
 

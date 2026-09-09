@@ -3,7 +3,7 @@
    ============================================================ */
 
 const {
-    put, get, head, generateClientTokenFromReadWriteToken, BlobPreconditionFailedError,
+    put, get, head, del, list, generateClientTokenFromReadWriteToken, BlobPreconditionFailedError,
 } = require('@vercel/blob');
 
 const TOKEN = () => process.env.BLOB_READ_WRITE_TOKEN;
@@ -98,6 +98,19 @@ async function putFile(pathname, body, contentType) {
     });
 }
 
+async function remove(pathname) {
+    try {
+        await del(pathname, { token: requireToken() });
+    } catch (err) {
+        console.error(`Blob delete failed for ${pathname}:`, err.message);
+    }
+}
+
+async function listPrefix(prefix) {
+    const { blobs } = await list({ token: requireToken(), prefix, limit: 1000 });
+    return blobs;
+}
+
 // Confirms a client upload actually landed, and returns the authoritative
 // URL. The browser is never trusted to report where a file ended up.
 // head() takes a pathname or a URL; we pass the pathname the token was
@@ -130,5 +143,6 @@ async function createUploadToken({ pathname, contentTypes, maxBytes }) {
 }
 
 module.exports = {
-    isConfigured, readJson, writeJson, putFile, describe, createUploadToken, isConflict, strongEtag,
+    isConfigured, readJson, writeJson, putFile, remove, listPrefix, describe, createUploadToken,
+    isConflict, strongEtag,
 };

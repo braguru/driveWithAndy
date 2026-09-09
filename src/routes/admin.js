@@ -47,7 +47,7 @@ router.post('/request-code', async (req, res) => {
     }
 
     try {
-        const { rateLimited } = await auth.requestCode(
+        const { rateLimited, handle } = await auth.requestCode(
             req.body?.email,
             code => sendAdminCode(process.env.ADMIN_EMAIL, code),
         );
@@ -55,8 +55,9 @@ router.post('/request-code', async (req, res) => {
         if (rateLimited) {
             return res.status(429).json({ error: 'Too many codes requested. Try again later.' });
         }
-        // Deliberately the same answer whether or not the email matched.
-        res.json({ sent: true });
+        // Deliberately the same answer whether or not the email matched. The
+        // handle just points at the pending record; the code is the secret.
+        res.json({ sent: true, handle: handle || null });
     } catch (err) {
         console.error('Admin code request failed:', err.message);
         res.status(500).json({ error: 'Could not send the code' });
@@ -69,7 +70,7 @@ router.post('/verify-code', async (req, res) => {
     }
 
     try {
-        const result = await auth.verifyCode(req.body?.email, req.body?.code);
+        const result = await auth.verifyCode(req.body?.email, req.body?.code, req.body?.handle);
         if (!result.ok) {
             const message = {
                 expired: 'That code has expired. Request a new one.',

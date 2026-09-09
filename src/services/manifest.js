@@ -49,7 +49,8 @@ async function readAuthoritative() {
     const { data, etag: readEtag } = await blob.readJson(MANIFEST_PATH);
     if (readEtag !== etag) return { stale: true, etag };
 
-    return { manifest: data || emptyManifest(), etag };
+    cache = { ts: Date.now(), data: data || emptyManifest(), etag };
+    return { manifest: cache.data, etag };
 }
 
 async function mutate(fn) {
@@ -98,8 +99,20 @@ async function listSection(section) {
     return live(await load(), section);
 }
 
+// The admin panel must not be shown a CDN-cached copy: it re-reads straight
+// after saving, and a stale answer looks like the edit was undone. This takes
+// the origin version, which after our own write is already in memory.
+async function loadCurrent() {
+    if (!blob.isConfigured()) return emptyManifest();
+
+    const { manifest, stale } = await readAuthoritative();
+    if (!stale) return manifest;
+    // Origin has moved on but the CDN has not caught up. Best available.
+    return load({ fresh: true });
+}
+
 async function listAll() {
-    const manifest = await load({ fresh: true });
+    const manifest = await loadCurrent();
     return {
         items:   live(manifest),
         deleted: manifest.items.filter(i => i.deletedAt),
@@ -200,7 +213,7 @@ async function reorder(section, orderedIds) {
 
 module.exports = {
     SECTIONS, IMAGE_TYPES, VIDEO_TYPES,
-    load, listSection, listAll,
+    load, loadCurrent, listSection, listAll,
     add, addMany, update, softDelete, restore, reorder,
     MANIFEST_PATH, emptyManifest,
 };

@@ -20,6 +20,7 @@ const SECTION_NAMES = {
 
 let activeSection = 'hero';
 let chosenFile    = null;
+let codeHandle    = null;   // points at the pending code record
 
 const $ = id => document.getElementById(id);
 
@@ -71,10 +72,11 @@ function initAuth() {
         button.textContent = 'Sending...';
 
         try {
-            await api('/request-code', {
+            const { handle } = await api('/request-code', {
                 method: 'POST',
                 body: JSON.stringify({ email: $('admin-email').value.trim() }),
             });
+            codeHandle = handle;
             emailForm.hidden = true;
             codeForm.hidden  = false;
             $('admin-code').focus();
@@ -96,8 +98,9 @@ function initAuth() {
             await api('/verify-code', {
                 method: 'POST',
                 body: JSON.stringify({
-                    email: $('admin-email').value.trim(),
-                    code:  $('admin-code').value.trim(),
+                    email:  $('admin-email').value.trim(),
+                    code:   $('admin-code').value.trim(),
+                    handle: codeHandle,
                 }),
             });
             await showManager();
