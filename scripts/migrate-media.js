@@ -6,7 +6,12 @@
    Safe to run more than once; files already in the manifest are skipped.
    ============================================================ */
 
-require('dotenv').config();
+const path_ = require('path');
+// Matches server.js: prefer .env.local (written by `vercel env pull`).
+require('dotenv').config({ path: [
+    path_.join(__dirname, '../.env.local'),
+    path_.join(__dirname, '../.env'),
+] });
 
 const fs   = require('fs');
 const path = require('path');
@@ -115,7 +120,12 @@ async function main() {
         return;
     }
 
-    let done = 0;
+    // Upload everything first, then record the whole batch in one write.
+    // Recording each file separately means 36 read-modify-write cycles on the
+    // same document, and Blob reads can trail a write by a few seconds, so
+    // that pattern loses entries.
+    const uploaded = [];
+
     for (const file of todo) {
         const ext      = path.extname(file.filename).toLowerCase();
         const pathname = `media/${file.section}/${slugify(file.filename)}${ext}`;
@@ -123,7 +133,7 @@ async function main() {
         process.stdout.write(`  uploading ${file.filename} ... `);
         const result = await blob.putFile(pathname, fs.readFileSync(file.localPath), file.contentType);
 
-        await manifest.add({
+        uploaded.push({
             section:     file.section,
             url:         result.url,
             pathname,
@@ -131,12 +141,19 @@ async function main() {
             caption:     file.caption,
             tag:         file.tag,
         });
-
-        done += 1;
         console.log('done');
     }
 
-    console.log(`\nMigrated ${done} files.`);
+    process.stdout.write(`\nRecording ${uploaded.length} files in the manifest ... `);
+    await manifest.addMany(uploaded);
+    console.log('done');
+
+    const check = await manifest.load({ fresh: true });
+    console.log(`\nMigrated ${uploaded.length} files. Manifest now holds ${check.items.length}.`);
+    if (check.items.length !== uploaded.length + already.size) {
+        console.error('WARNING: manifest count does not match. Re-run to reconcile.');
+        process.exitCode = 1;
+    }
 }
 
 main().catch(err => {

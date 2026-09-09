@@ -2,7 +2,9 @@
    Vercel Blob — Storage Layer
    ============================================================ */
 
-const { put, get, head, generateClientTokenFromReadWriteToken } = require('@vercel/blob');
+const {
+    put, get, head, generateClientTokenFromReadWriteToken, BlobPreconditionFailedError,
+} = require('@vercel/blob');
 
 const TOKEN = () => process.env.BLOB_READ_WRITE_TOKEN;
 
@@ -19,8 +21,9 @@ function requireToken() {
 }
 
 // ── JSON documents ────────────────────────────────────────────
-// Blob caches aggressively at the CDN, so reads pass useCache:false and
-// writes set a short max-age. Otherwise an edit would take a month to show.
+// Reads return the ETag alongside the data so callers can write back
+// conditionally. Blob reads can lag a write by a few seconds, so a
+// read-modify-write without `ifMatch` silently loses updates.
 
 async function readJson(pathname, access = 'public') {
     const result = await get(pathname, {
@@ -28,17 +31,21 @@ async function readJson(pathname, access = 'public') {
         useCache: false,
         token: requireToken(),
     });
-    if (!result) return null;
+    if (!result) return { data: null, etag: null };
 
     const text = await streamToString(result.stream);
     try {
-        return JSON.parse(text);
+        return { data: JSON.parse(text), etag: strongEtag(result.blob?.etag) };
     } catch (err) {
         throw new Error(`Corrupt JSON at ${pathname}: ${err.message}`);
     }
 }
 
-async function writeJson(pathname, data, access = 'public') {
+// Pass ifMatch to make the write conditional. A null ifMatch means an
+// unconditional overwrite, which is only safe when nothing else can be
+// writing at the same time.
+// Returns the put result, whose `etag` is the authoritative new version.
+async function writeJson(pathname, data, access = 'public', ifMatch = null) {
     return put(pathname, JSON.stringify(data, null, 2), {
         access,
         token: requireToken(),
@@ -46,7 +53,20 @@ async function writeJson(pathname, data, access = 'public') {
         addRandomSuffix: false,
         allowOverwrite: true,
         cacheControlMaxAge: 60,
+        ...(ifMatch ? { ifMatch } : {}),
     });
+}
+
+// A CDN-served response carries a weak ETag (W/"abc") while the origin
+// reports the strong form ("abc"). They describe the same bytes, so compare
+// and send the strong form everywhere.
+function strongEtag(etag) {
+    return etag ? String(etag).replace(/^W\//, '') : null;
+}
+
+function isConflict(err) {
+    return err instanceof BlobPreconditionFailedError
+        || /precondition/i.test(err?.message || '');
 }
 
 async function streamToString(stream) {
@@ -85,7 +105,8 @@ async function putFile(pathname, body, contentType) {
 // reason is logged rather than swallowed.
 async function describe(pathname) {
     try {
-        return await head(pathname, { token: requireToken() });
+        const info = await head(pathname, { token: requireToken() });
+        return info ? { ...info, etag: strongEtag(info.etag) } : null;
     } catch (err) {
         console.error(`Blob head failed for ${pathname}:`, err.message);
         return null;
@@ -109,5 +130,5 @@ async function createUploadToken({ pathname, contentTypes, maxBytes }) {
 }
 
 module.exports = {
-    isConfigured, readJson, writeJson, putFile, describe, createUploadToken,
+    isConfigured, readJson, writeJson, putFile, describe, createUploadToken, isConflict, strongEtag,
 };

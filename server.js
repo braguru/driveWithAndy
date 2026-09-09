@@ -1,4 +1,6 @@
-require('dotenv').config();
+// .env.local is what `vercel env pull` writes, so it takes precedence.
+// dotenv does not overwrite values already loaded, so .env fills the gaps.
+require('dotenv').config({ path: ['.env.local', '.env'] });
 
 const express = require('express');
 const path    = require('path');

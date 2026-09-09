@@ -53,7 +53,8 @@ const RECORD_ACCESS = 'public';
 
 async function readPending() {
     try {
-        return (await blob.readJson(PENDING_PATH, RECORD_ACCESS)) || { requests: [] };
+        const { data } = await blob.readJson(PENDING_PATH, RECORD_ACCESS);
+        return data || { requests: [] };
     } catch (err) {
         console.error('Auth record read failed:', err.message);
         return { requests: [] };

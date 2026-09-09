@@ -12,35 +12,78 @@ const SECTIONS   = ['hero', 'gallery', 'fleet'];
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const VIDEO_TYPES = ['video/mp4'];
 
-let cache = null; // { ts, data }
+// { ts, data, etag } — etag is the version this copy represents.
+let cache = null;
+
+const MAX_ATTEMPTS = 6;
 
 function emptyManifest() {
     return { version: 1, updatedAt: null, items: [] };
 }
 
+// Reading a public blob goes through the CDN, which can serve a version up to
+// cacheControlMaxAge old. That is fine for visitors, so the public read path
+// stays cheap and slightly stale.
 async function load({ fresh = false } = {}) {
     if (!fresh && cache && Date.now() - cache.ts < CACHE_TTL) return cache.data;
     if (!blob.isConfigured()) return emptyManifest();
 
-    const data = (await blob.readJson(MANIFEST_PATH)) || emptyManifest();
-    cache = { ts: Date.now(), data };
-    return data;
-}
-
-async function save(manifest) {
-    manifest.updatedAt = new Date().toISOString();
-    await blob.writeJson(MANIFEST_PATH, manifest);
-    cache = { ts: Date.now(), data: manifest };
+    const { data, etag } = await blob.readJson(MANIFEST_PATH);
+    const manifest = data || emptyManifest();
+    cache = { ts: Date.now(), data: manifest, etag };
     return manifest;
 }
 
-// Every write is read-modify-write on the whole document. Safe here because
-// there is exactly one admin; revisit if that ever stops being true.
+// Writes cannot tolerate that staleness: appending to a CDN-cached copy would
+// silently drop whatever was written since. head() reads the origin, so it
+// gives the true current version to compare against and to write against.
+async function readAuthoritative() {
+    const info = await blob.describe(MANIFEST_PATH);
+    const etag = info ? info.etag : null;
+
+    if (!etag) return { manifest: emptyManifest(), etag: null };
+
+    // Our own last write is still the current version, so skip the CDN.
+    if (cache && cache.etag === etag) return { manifest: cache.data, etag };
+
+    const { data, etag: readEtag } = await blob.readJson(MANIFEST_PATH);
+    if (readEtag !== etag) return { stale: true, etag };
+
+    return { manifest: data || emptyManifest(), etag };
+}
+
 async function mutate(fn) {
-    const manifest = await load({ fresh: true });
-    const result   = await fn(manifest);
-    await save(manifest);
-    return result;
+    let lastError;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        if (!blob.isConfigured()) throw new Error('Blob storage is not configured');
+
+        const { manifest, etag, stale } = await readAuthoritative();
+
+        if (stale) {
+            // The CDN has not caught up with a recent write yet. Waiting is
+            // the only safe move; writing now would clobber it.
+            lastError = new Error('Blob read is behind the latest write');
+            await new Promise(r => setTimeout(r, 1000 * attempt));
+            continue;
+        }
+
+        const result = await fn(manifest);
+        manifest.updatedAt = new Date().toISOString();
+
+        try {
+            const written = await blob.writeJson(MANIFEST_PATH, manifest, 'public', etag);
+            cache = { ts: Date.now(), data: manifest, etag: blob.strongEtag(written.etag) };
+            return result;
+        } catch (err) {
+            if (!blob.isConflict(err)) throw err;
+            lastError = err;
+            cache = null;   // our copy is not what we thought it was
+            await new Promise(r => setTimeout(r, 500 * attempt));
+        }
+    }
+
+    throw new Error(`Could not save the media list after ${MAX_ATTEMPTS} attempts: ${lastError?.message}`);
 }
 
 // ── Queries ───────────────────────────────────────────────────
@@ -88,6 +131,34 @@ async function add({ section, url, pathname, contentType, caption, tag }) {
     });
 }
 
+// Appends many items in a single write. The migration uses this: doing 36
+// separate read-modify-writes is both slow and the exact pattern the ETag
+// guard has to keep retrying against.
+async function addMany(entries) {
+    return mutate(manifest => {
+        const added = [];
+        for (const entry of entries) {
+            const item = {
+                id:         crypto.randomUUID(),
+                section:    entry.section,
+                url:        entry.url,
+                pathname:   entry.pathname,
+                kind:       kindFor(entry.contentType),
+                caption:    entry.caption || '',
+                tag:        entry.tag || '',
+                // live() already counts what this loop has pushed, so it must
+                // not be added to a separate running total.
+                order:      live(manifest, entry.section).length,
+                uploadedAt: new Date().toISOString(),
+                deletedAt:  null,
+            };
+            manifest.items.push(item);
+            added.push(item);
+        }
+        return added;
+    });
+}
+
 async function update(id, { caption, tag }) {
     return mutate(manifest => {
         const item = manifest.items.find(i => i.id === id);
@@ -129,7 +200,7 @@ async function reorder(section, orderedIds) {
 
 module.exports = {
     SECTIONS, IMAGE_TYPES, VIDEO_TYPES,
-    load, save, listSection, listAll,
-    add, update, softDelete, restore, reorder,
+    load, listSection, listAll,
+    add, addMany, update, softDelete, restore, reorder,
     MANIFEST_PATH, emptyManifest,
 };
