@@ -135,8 +135,10 @@ within about a minute.
 
 ### First-time setup
 
-1. Vercel dashboard → **Storage** → create a **Blob** store, connected to this
-   project and including the **Development** environment.
+1. Vercel dashboard → **Storage** → create a **Blob** store. Set its access to
+   **Public**: the media URLs are embedded in the public site, so they have to
+   be readable without authentication. Connect it to this project and include
+   the **Development** environment so `vercel env pull` picks up the token.
 2. `vercel env pull` to get `BLOB_READ_WRITE_TOKEN` locally.
 3. Set `ADMIN_EMAIL` and `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`)
    locally and in the Vercel dashboard.
@@ -151,7 +153,10 @@ within about a minute.
    twice is safe; files already in the manifest are skipped.
 
 The files in `content/` stay in the repo on purpose. If Blob is unreachable
-the site serves those instead of showing empty sections.
+the site serves those instead of showing empty sections. The same applies if a
+section is emptied: removing every hero image brings the original `content/`
+photos back rather than leaving the hero blank. That is deliberate, since a
+blank hero looks broken to visitors.
 
 ### Things worth knowing
 

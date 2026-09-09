@@ -44,12 +44,16 @@ function hashCode(code) {
 }
 
 // ── One-time codes ────────────────────────────────────────────
-// The pending record lives in a private blob because serverless functions
-// share no memory between requests. It holds only a hash of the code.
+// Serverless functions share no memory between requests, so the pending code
+// is kept in the Blob store. Only an HMAC of the code is stored, keyed by
+// ADMIN_SESSION_SECRET, so the record is useless to anyone who reads it. That
+// is deliberate: the store the site uses has to be public for media URLs to
+// work, and a write that the store rejected would lock everyone out.
+const RECORD_ACCESS = 'public';
 
 async function readPending() {
     try {
-        return (await blob.readJson(PENDING_PATH, 'private')) || { requests: [] };
+        return (await blob.readJson(PENDING_PATH, RECORD_ACCESS)) || { requests: [] };
     } catch (err) {
         console.error('Auth record read failed:', err.message);
         return { requests: [] };
@@ -61,17 +65,16 @@ async function requestCode(email, sendMail) {
     const now     = Date.now();
     const recent  = (record.requests || []).filter(ts => now - ts < REQUEST_WINDOW);
 
-    // Rate limit before checking the email, so the two paths cost the same.
+    // Wrong email gets the same answer as the right one. The page must not
+    // reveal who the admin is. Nothing is recorded, because only real sends
+    // count towards the limit.
+    if (normalise(email) !== adminEmail()) return { sent: false, rateLimited: false };
+
+    // Caps how often Andy's inbox can be mailed. Counting only actual sends
+    // means a stranger hitting this endpoint cannot lock him out.
     if (recent.length >= MAX_REQUESTS) return { sent: false, rateLimited: true };
 
     recent.push(now);
-
-    // Wrong email gets the same answer as the right one. The page must not
-    // reveal who the admin is.
-    if (normalise(email) !== adminEmail()) {
-        await blob.writeJson(PENDING_PATH, { ...record, requests: recent }, 'private');
-        return { sent: false, rateLimited: false };
-    }
 
     const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
 
@@ -80,7 +83,7 @@ async function requestCode(email, sendMail) {
         expiresAt: now + CODE_TTL,
         attempts:  0,
         requests:  recent,
-    }, 'private');
+    }, RECORD_ACCESS);
 
     await sendMail(code);
     return { sent: true, rateLimited: false };
@@ -97,12 +100,12 @@ async function verifyCode(email, code) {
     if (!safeEqual(hashCode(code), record.codeHash)) {
         await blob.writeJson(PENDING_PATH, {
             ...record, attempts: record.attempts + 1,
-        }, 'private');
+        }, RECORD_ACCESS);
         return { ok: false, reason: 'invalid' };
     }
 
     // Burn the code so it cannot be replayed.
-    await blob.writeJson(PENDING_PATH, { requests: record.requests || [] }, 'private');
+    await blob.writeJson(PENDING_PATH, { requests: record.requests || [] }, RECORD_ACCESS);
     return { ok: true, token: createSession(adminEmail()) };
 }
 

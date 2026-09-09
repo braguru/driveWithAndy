@@ -2,7 +2,7 @@
    Vercel Blob — Storage Layer
    ============================================================ */
 
-const { put, del, get, head, generateClientTokenFromReadWriteToken } = require('@vercel/blob');
+const { put, get, head, generateClientTokenFromReadWriteToken } = require('@vercel/blob');
 
 const TOKEN = () => process.env.BLOB_READ_WRITE_TOKEN;
 
@@ -78,16 +78,16 @@ async function putFile(pathname, body, contentType) {
     });
 }
 
-async function remove(url) {
-    return del(url, { token: requireToken() });
-}
-
 // Confirms a client upload actually landed, and returns the authoritative
 // URL. The browser is never trusted to report where a file ended up.
+// head() takes a pathname or a URL; we pass the pathname the token was
+// minted for. A miss and a genuine error look the same to the caller, so the
+// reason is logged rather than swallowed.
 async function describe(pathname) {
     try {
         return await head(pathname, { token: requireToken() });
-    } catch {
+    } catch (err) {
+        console.error(`Blob head failed for ${pathname}:`, err.message);
         return null;
     }
 }
@@ -109,5 +109,5 @@ async function createUploadToken({ pathname, contentTypes, maxBytes }) {
 }
 
 module.exports = {
-    isConfigured, readJson, writeJson, putFile, remove, describe, createUploadToken,
+    isConfigured, readJson, writeJson, putFile, describe, createUploadToken,
 };

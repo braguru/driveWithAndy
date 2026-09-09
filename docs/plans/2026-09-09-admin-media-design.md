@@ -73,7 +73,9 @@ The server caches the manifest in memory for 60 seconds, the same approach
 ## Login
 
 Env vars, all set in the Vercel dashboard and never committed:
-`ADMIN_EMAIL`, `ADMIN_SESSION_SECRET`, `BLOB_READ_WRITE_TOKEN`.
+`ADMIN_EMAIL`, `ADMIN_SESSION_SECRET`, `BLOB_READ_WRITE_TOKEN`. The Blob store
+must be created with **Public** access, since the media URLs are embedded in
+the public site.
 
 1. Andy enters his email at `/admin`.
 2. If it matches `ADMIN_EMAIL`, a six digit code is emailed through the
@@ -82,8 +84,17 @@ Env vars, all set in the Vercel dashboard and never committed:
 3. He enters the code and gets a session cookie lasting 7 days.
 
 Serverless functions keep no memory between requests, so the pending code
-lives in Blob: a hash of the code, a 10 minute expiry, and an attempt counter.
-Three wrong guesses burns it. Code requests are capped at 5 per hour.
+lives in Blob: an HMAC of the code keyed by `ADMIN_SESSION_SECRET`, a 10
+minute expiry, and an attempt counter. Three wrong guesses burns it. Sends are
+capped at 5 per hour.
+
+The record sits in the same public store as the media rather than a private
+one, because a store rejecting the write would lock everyone out of signing
+in. Nothing in it is usable without the secret.
+
+Only actual sends count towards the rate limit. Counting every request would
+let anyone lock Andy out for an hour by posting to a public endpoint five
+times.
 
 The session cookie needs no storage. It is the email, an expiry and an HMAC
 signature over both, set `httpOnly`, `Secure` and `SameSite=Lax`. Changing
@@ -101,8 +112,10 @@ Files bypass our function entirely, because of the 4.5MB cap.
 2. That route verifies the session, then returns a short lived upload token
    that pins the allowed content types.
 3. Browser uploads straight to Blob and receives a URL.
-4. Browser calls `POST /api/admin/media` with the URL, caption and tag. This
-   is what writes the manifest.
+4. Browser calls `POST /api/admin/media` with the pathname, caption and tag.
+   The server then asks Blob directly, with `head(pathname)`, for the real URL
+   and content type before writing the manifest, so a URL supplied by the
+   browser is never trusted.
 
 Step 4 deliberately does not use Vercel's `onUploadCompleted` webhook, even
 though recording the file there looks natural. That webhook cannot reach

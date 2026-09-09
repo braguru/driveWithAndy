@@ -2,9 +2,11 @@
    Media Manager — admin page behaviour
    ============================================================ */
 
-// Loaded from a CDN because the site has no bundler and the published
-// browser build of this package cannot be used directly from node_modules.
-import { put } from 'https://esm.sh/@vercel/blob@2.8.0/client';
+// The upload SDK is loaded from a CDN, because the site has no bundler and
+// the published browser build cannot be used straight from node_modules.
+// It is imported lazily inside doUpload so that a CDN outage costs only
+// uploading; signing in and editing captions still work.
+const BLOB_CLIENT = 'https://esm.sh/@vercel/blob@2.8.0/client';
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
@@ -154,6 +156,13 @@ async function doUpload() {
     bar.style.width = '0%';
 
     try {
+        let put;
+        try {
+            ({ put } = await import(BLOB_CLIENT));
+        } catch {
+            throw new Error('Could not load the uploader. Check your connection and try again.');
+        }
+
         // The server mints a short-lived token. The file then goes straight to
         // Blob, because Vercel caps request bodies to functions at 4.5MB.
         const { token, pathname } = await api('/blob-token', {
